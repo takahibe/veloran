@@ -86,3 +86,53 @@ Full day-by-day in the approved plan at `~/.claude/plans/c-users-user-claude-cod
 ## The demo (what we're ultimately building toward)
 
 Eight beats, two stories (human + AI), one closer. Full script in the plan file's "Verification" section. If every beat works on camera, we submit.
+
+---
+
+## Session resume notes (last updated 2026-04-21)
+
+**Progress:** Day 2 of 20 complete. Committed as `Day 2: Privy auth, Prisma schema, dashboard shell`.
+
+**What exists and works:**
+- Next.js 16.2.4 + Tailwind 4 scaffold
+- Prisma 6 schema (`Creator`, `Post`, `Unlock`) + SQLite dev.db migrated
+- Privy provider on `@privy-io/react-auth@3.22.1` with Solana-only embedded wallets
+- `/` landing page with sign-in CTA
+- `/dashboard` client component that upserts Creator via `/api/me`
+- `POST/GET /api/me` verifies Privy bearer token
+- Routes compile: `GET /` and `/dashboard` both return 200
+
+**Known discovery (unverified):** `x402@0.7.3` is a transitive dep of Privy — may obviate separate x402 SDK install. Verify on Apr 29 spike day.
+
+**Known version mismatches from training data:**
+- Next.js 16 (not 15) — read `node_modules/next/dist/docs/` before writing page code
+- Tailwind 4 (not 3) — different config file structure
+- Prisma 6 (downgraded from 7 which requires new `prisma.config.ts` adapter API)
+
+**Blocked on user action when session resumes:**
+1. User needs to paste Privy App Secret into `veloran/.env.local` (replacing `PASTE_YOUR_PRIVY_APP_SECRET_HERE`)
+2. User needs to test login flow at `localhost:3000` and confirm Creator row is created
+3. If step 2 fails, debug before starting Day 3
+
+**Next up (Day 3, Apr 22 per plan):**
+- Build `/post/new` form (title, content, price)
+- Add `POST /api/posts` route (authed, inserts Post)
+- Add post list to `/dashboard`
+- No Solana interactions yet — pure CRUD
+
+**How to resume dev server:**
+```
+cd "C:\Users\User\CLAUDE CODE\Veloran Capital\veloran"
+npm run dev
+```
+
+**Files created this session:**
+- `lib/db.ts` — Prisma singleton
+- `lib/privy-server.ts` — token verification helper
+- `components/Providers.tsx` — PrivyProvider wrapper
+- `components/LoginButton.tsx` — landing page CTA
+- `components/DashboardClient.tsx` — gated dashboard client component
+- `app/dashboard/page.tsx`, `app/api/me/route.ts`
+- `prisma/schema.prisma`, `prisma/dev.db`, `prisma/migrations/20260420162738_init/`
+- `.env`, `.env.local`, `.env.example`
+
