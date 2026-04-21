@@ -1,0 +1,59 @@
+// Veloran database schema
+// SQLite for local dev; switch to postgresql for Vercel Postgres when deploying.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A human (creator) or subscribed agent. Identified by Privy user ID.
+model Creator {
+  id             String   @id @default(cuid())
+  privyUserId    String   @unique                  // from Privy: did:privy:...
+  email          String?                           // optional, from Privy email login
+  solanaAddress  String?  @unique                  // the embedded wallet pubkey (assigned on first login)
+  displayName    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  posts          Post[]
+  unlocks        Unlock[]  @relation("UnlockedBy")
+}
+
+// A paywalled piece of content.
+model Post {
+  id             String   @id @default(cuid())
+  slug           String   @unique                  // URL: /p/<slug>
+  title          String
+  preview        String                            // 1-line teaser shown before paywall
+  content        String                            // the gated markdown/text
+  priceUsdc      Int                               // price in micro-USDC (1_000_000 = 1 USDC)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  creatorId      String
+  creator        Creator  @relation(fields: [creatorId], references: [id])
+
+  unlocks        Unlock[]
+}
+
+// One row per successful payment (human or agent).
+model Unlock {
+  id             String   @id @default(cuid())
+  postId         String
+  post           Post     @relation(fields: [postId], references: [id])
+
+  // readerCreatorId is nullable: AI agents pay without signing up via Privy.
+  readerCreatorId String?
+  readerCreator   Creator? @relation("UnlockedBy", fields: [readerCreatorId], references: [id])
+  readerAddress  String                            // pubkey that paid, always recorded
+  readerType     String                            // "human" | "agent"
+
+  amountUsdc     Int                               // micro-USDC paid
+  txSignature    String   @unique                  // Solana tx signature — our source of truth
+  createdAt      DateTime @default(now())
+}
