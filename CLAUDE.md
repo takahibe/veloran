@@ -89,11 +89,12 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
-## Session resume notes (last updated 2026-04-25)
+## Session resume notes (last updated 2026-04-25, end of Week 1 + polish pass)
 
-**Progress:** Week 1 complete (Days 1–6 + creator bypass). Human-payment story is real on devnet — demo beats 1–4 bookable.
+**Progress:** Week 1 complete (Days 1–6 + creator bypass) + polish pass (landing page glow-up + delete posts). Human-payment story is real on devnet — demo beats 1–4 bookable. UI is demo-ready.
 
 **Latest commits:**
+- `707777f` — Polish: landing page glow-up + delete post button
 - `1100b26` — Creator bypass on /p/[slug]
 - `094fc0c` — Day 6: signed unlock cookie (refresh-safe)
 - `22e0752` — Fix Privy solana:devnet RPC config
@@ -124,17 +125,18 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 - Prisma 6 (NOT 7 — schema.prisma has `url` directly)
 - React 19 / Privy 3.22.1 / @solana/web3.js 1.98 / @solana/spl-token 0.4
 
-**Open decisions:**
-- WSL vs native Windows for Solana/Anchor toolchain — must decide before Apr 27 (Week 2 starts)
+**Open decisions (BLOCKING Week 2 start):**
+- **WSL vs native Windows for Solana/Anchor toolchain** — user is processing this now, will decide on resume.
+- Recommendation surfaced last turn: **Option A (WSL Ubuntu)**. Full menu was:
+  - **A.** WSL Ubuntu + toolchain — ~30–45 min setup, low pain risk, canonical path
+  - **B.** Native Windows toolchain — ~60 min + likely debugging, known footguns
+  - **C.** Cloud dev env (Codespaces/Gitpod) — fast setup, slower iteration
+- If A is picked, the flow is: user runs `wsl --install` (admin PowerShell, one reboot) → opens Ubuntu, sets user/pw → Claude walks them through installing rustup + Solana CLI + Anchor via copy-paste, clones repo into WSL, points Anchor at devnet, scaffolds the program.
 
-**Next up (user picked Option C: lower-effort polish before Anchor):**
-Pending choice between:
-1. Landing page glow-up (~60 min, high demo value)
-2. Claude preview generator (~45 min)
-3. Earnings card on dashboard (~45 min, high demo value)
-4. Delete post button (~30 min)
-
-Recommended order for demo video impact: 1 → 3 → 2 → 4. User to confirm on resume.
+**Polish pass results (this session):**
+- ✅ Landing page glow-up (commit 707777f) — hero with violet glow, gradient headline, 3-feature grid, "How it works" steps, footer
+- ✅ Delete post button (same commit) — DELETE /api/posts/[id] route w/ ownership check, transactional delete (Unlock rows then Post), trash icon on dashboard rows w/ confirm prompt
+- ⏭️ Skipped from polish menu (still available later): Claude preview generator (~45 min), Earnings card on dashboard (~45 min, high demo value)
 
 **Punted / known UX gaps:**
 - No edit post route (delete-and-recreate is the workaround)
