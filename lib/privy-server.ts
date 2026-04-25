@@ -21,3 +21,17 @@ export async function verifyPrivyToken(authHeader: string | null) {
     return null;
   }
 }
+
+/**
+ * Verifies the Privy access-token cookie set by the client SDK.
+ * Use from server components / route handlers that don't go through
+ * a fetch with an Authorization header.
+ */
+export async function verifyPrivyCookie(token: string | undefined) {
+  if (!token) return null;
+  try {
+    return await privy.verifyAuthToken(token);
+  } catch {
+    return null;
+  }
+}

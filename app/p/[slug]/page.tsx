@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { microUsdcToUsd } from "@/lib/slug";
 import { PaywallGate } from "@/components/PaywallGate";
 import { unlockCookieName, verifyUnlockToken } from "@/lib/content-gate";
+import { verifyPrivyCookie } from "@/lib/privy-server";
 import type { Metadata } from "next";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -20,11 +21,24 @@ async function getPost(slug: string) {
       content: true,
       priceUsdc: true,
       createdAt: true,
+      creatorId: true,
       creator: {
         select: { displayName: true, email: true, solanaAddress: true },
       },
     },
   });
+}
+
+async function isViewerTheCreator(creatorId: string): Promise<boolean> {
+  const jar = await cookies();
+  const token = jar.get("privy-token")?.value;
+  const claims = await verifyPrivyCookie(token);
+  if (!claims) return false;
+  const me = await prisma.creator.findUnique({
+    where: { privyUserId: claims.userId },
+    select: { id: true },
+  });
+  return me?.id === creatorId;
 }
 
 async function getUnlockedContent(
@@ -57,7 +71,10 @@ export default async function PaywallPage({ params }: Props) {
   if (!post) notFound();
   if (!post.creator.solanaAddress) notFound();
 
-  const initialContent = await getUnlockedContent(post.slug, post.content);
+  const isOwner = await isViewerTheCreator(post.creatorId);
+  const initialContent = isOwner
+    ? post.content
+    : await getUnlockedContent(post.slug, post.content);
 
   const byline =
     post.creator.displayName ??
@@ -88,6 +105,20 @@ export default async function PaywallPage({ params }: Props) {
           })}
         </time>
       </p>
+
+      {isOwner && (
+        <div className="mt-6 flex items-center justify-between rounded-lg border border-violet-700/40 bg-violet-950/20 px-4 py-2.5">
+          <p className="text-xs text-violet-300">
+            Viewing as creator — content unlocked, no payment needed.
+          </p>
+          <Link
+            href="/dashboard"
+            className="text-xs text-violet-300 hover:text-violet-200 underline underline-offset-2"
+          >
+            ← Dashboard
+          </Link>
+        </div>
+      )}
 
       <p className="mt-8 text-lg text-neutral-300 leading-relaxed">
         {post.preview}
