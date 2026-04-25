@@ -125,18 +125,47 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 - Prisma 6 (NOT 7 — schema.prisma has `url` directly)
 - React 19 / Privy 3.22.1 / @solana/web3.js 1.98 / @solana/spl-token 0.4
 
-**Open decisions (BLOCKING Week 2 start):**
-- **WSL vs native Windows for Solana/Anchor toolchain** — user is processing this now, will decide on resume.
-- Recommendation surfaced last turn: **Option A (WSL Ubuntu)**. Full menu was:
-  - **A.** WSL Ubuntu + toolchain — ~30–45 min setup, low pain risk, canonical path
-  - **B.** Native Windows toolchain — ~60 min + likely debugging, known footguns
-  - **C.** Cloud dev env (Codespaces/Gitpod) — fast setup, slower iteration
-- If A is picked, the flow is: user runs `wsl --install` (admin PowerShell, one reboot) → opens Ubuntu, sets user/pw → Claude walks them through installing rustup + Solana CLI + Anchor via copy-paste, clones repo into WSL, points Anchor at devnet, scaffolds the program.
+**Open decisions:** none currently blocking — toolchain decision RESOLVED (Option A, WSL Ubuntu).
 
-**Polish pass results (this session):**
+## WSL toolchain — INSTALLED + VERIFIED (2026-04-26)
+
+**Canonical workspace is now `~/veloran` inside WSL Ubuntu.** The Windows copy at `C:\Users\User\CLAUDE CODE\Veloran Capital\veloran` is the git origin but no longer where dev happens. To sync the Windows copy with new commits, the user needs to manually `git push` from WSL — but git refuses to push into a non-bare checked-out branch by default. Easier flow: edit CLAUDE.md / docs from Windows (commit there), then `git pull origin main` from WSL on resume.
+
+**Installed in WSL Ubuntu:**
+- gcc 13.3.0 (build-essential + libssl-dev + libudev-dev + pkg-config)
+- rustc 1.95.0
+- solana-cli 3.1.14 (Agave) — config set to devnet, keypair at `~/.config/solana/id.json`, balance 5 SOL (web faucet — devnet airdrop CLI was rate-limited)
+- avm + anchor-cli 0.31.1 (NOT 0.30.1 — see version note below)
+- node v20.20.2 / npm 10.8.2
+
+**Critical version note:** Plan said Anchor 0.30. **Anchor 0.30.1 does NOT compile on Rust 1.95** — `proc-macro2::Span::source_file` was removed in newer proc-macro2, breaks `anchor-syn 0.30.1`. Pinned to **Anchor 0.31.1** for both CLI (avm) and crate (`anchor-lang = "0.31.1"` in `programs/veloran-paywall/Cargo.toml`). Build succeeds clean.
+
+**Project state in WSL (~/veloran):**
+- Full repo cloned from Windows path. `git log` matches Windows up to commit `2b27899`.
+- `npm install --legacy-peer-deps` completed (1188 packages, 23 non-critical vulns ignored).
+- `.env.local`, `.env`, `prisma/dev.db` copied over from Windows.
+- Anchor workspace scaffolded at `~/veloran/anchor/`:
+  - `programs/veloran-paywall/src/lib.rs` — default scaffold with `declare_id!("KrJCJYARa5cW1jXe9ojLRPAiaWKMddmCZLiKHm5oYSU")` and empty `initialize` instruction
+  - `Anchor.toml` — cluster: Devnet; `[programs.devnet]` references `veloran_paywall = "KrJC..."` (note: program ID is the Anchor-generated default; user's deploy keypair will not match — must regenerate ID with `anchor keys list` + `anchor keys sync` before first deploy)
+  - `programs/veloran-paywall/Cargo.toml` — pinned `anchor-lang = "0.31.1"`, package name `veloran-paywall`, lib name `veloran_paywall`
+- `anchor build` ✅ succeeds, produces `target/deploy/veloran_paywall.so`
+
+**Important: program ID needs regeneration before first deploy.** The default `KrJC...` ID came from the Anchor scaffold; the actual ID is derived from the deploy keypair Anchor generates at `target/deploy/veloran_paywall-keypair.json`. Run `anchor keys list` to see the real one, then `anchor keys sync` to update both `lib.rs` `declare_id!` and `Anchor.toml`. Do this before writing the program logic so the ID is stable.
+
+**No commits made in WSL yet.** All Anchor scaffold files are uncommitted in `~/veloran`.
+
+**Polish pass results (Apr 25 session):**
 - ✅ Landing page glow-up (commit 707777f) — hero with violet glow, gradient headline, 3-feature grid, "How it works" steps, footer
 - ✅ Delete post button (same commit) — DELETE /api/posts/[id] route w/ ownership check, transactional delete (Unlock rows then Post), trash icon on dashboard rows w/ confirm prompt
 - ⏭️ Skipped from polish menu (still available later): Claude preview generator (~45 min), Earnings card on dashboard (~45 min, high demo value)
+
+**Next session (Apr 27 per schedule, but we're 1 day ahead):**
+1. User: `cd ~/veloran && git pull origin main` to grab this CLAUDE.md update
+2. Claude: walk user through `anchor keys list` + `anchor keys sync` to lock in the real program ID
+3. Claude: write `pay_for_content` instruction in `programs/veloran-paywall/src/lib.rs` — ~100 lines: SPL token transfer w/ 95/5 split via CPI, optionally a Creator-PDA earnings counter
+4. `anchor build` + `anchor deploy --provider.cluster devnet` to push to devnet
+5. Commit Anchor scaffold + program + deployment artifacts
+6. Apr 28 work (TS client, route Next.js through the program) lands in the session after
 
 **Punted / known UX gaps:**
 - No edit post route (delete-and-recreate is the workaround)
