@@ -24,6 +24,8 @@ type Props = {
   priceUsd: string;
   priceUsdc: number; // micro-USDC
   creatorAddress: string;
+  /** Server-verified content (cookie-gated). When present, gate starts unlocked. */
+  initialContent?: string | null;
 };
 
 type Status = "idle" | "paying" | "verifying" | "unlocked" | "error";
@@ -35,13 +37,18 @@ export function PaywallGate({
   priceUsd,
   priceUsdc,
   creatorAddress,
+  initialContent,
 }: Props) {
   const { ready, authenticated, login, getAccessToken } = usePrivy();
   const { wallets } = useWallets();
   const { signAndSendTransaction } = useSignAndSendTransaction();
 
-  const [status, setStatus] = useState<Status>("idle");
-  const [content, setContent] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status>(
+    initialContent ? "unlocked" : "idle"
+  );
+  const [content, setContent] = useState<string | null>(
+    initialContent ?? null
+  );
   const [error, setError] = useState<string | null>(null);
   const [txSig, setTxSig] = useState<string | null>(null);
 

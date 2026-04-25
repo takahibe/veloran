@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { microUsdcToUsd } from "@/lib/slug";
 import { PaywallGate } from "@/components/PaywallGate";
+import { unlockCookieName, verifyUnlockToken } from "@/lib/content-gate";
 import type { Metadata } from "next";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -15,6 +17,7 @@ async function getPost(slug: string) {
       slug: true,
       title: true,
       preview: true,
+      content: true,
       priceUsdc: true,
       createdAt: true,
       creator: {
@@ -22,6 +25,15 @@ async function getPost(slug: string) {
       },
     },
   });
+}
+
+async function getUnlockedContent(
+  slug: string,
+  content: string
+): Promise<string | null> {
+  const jar = await cookies();
+  const token = jar.get(unlockCookieName(slug))?.value;
+  return verifyUnlockToken(token, slug) ? content : null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -44,6 +56,8 @@ export default async function PaywallPage({ params }: Props) {
   const post = await getPost(slug);
   if (!post) notFound();
   if (!post.creator.solanaAddress) notFound();
+
+  const initialContent = await getUnlockedContent(post.slug, post.content);
 
   const byline =
     post.creator.displayName ??
@@ -84,6 +98,7 @@ export default async function PaywallPage({ params }: Props) {
         priceUsd={microUsdcToUsd(post.priceUsdc)}
         priceUsdc={post.priceUsdc}
         creatorAddress={post.creator.solanaAddress}
+        initialContent={initialContent}
       />
 
       <p className="mt-8 text-center text-xs text-neutral-600">

@@ -4,6 +4,27 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { prisma } from "@/lib/db";
 import { verifyPrivyToken } from "@/lib/privy-server";
 import { getServerConnection, USDC_DEVNET_MINT } from "@/lib/solana";
+import {
+  signUnlockToken,
+  unlockCookieName,
+  UNLOCK_COOKIE_MAX_AGE,
+} from "@/lib/content-gate";
+
+function withUnlockCookie(
+  res: NextResponse,
+  slug: string
+): NextResponse {
+  res.cookies.set({
+    name: unlockCookieName(slug),
+    value: signUnlockToken(slug),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: UNLOCK_COOKIE_MAX_AGE,
+  });
+  return res;
+}
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -66,7 +87,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     where: { txSignature },
   });
   if (existing) {
-    return NextResponse.json({ ok: true, content: post.content });
+    return withUnlockCookie(
+      NextResponse.json({ ok: true, content: post.content }),
+      slug
+    );
   }
 
   // 4. Fetch + verify the on-chain transaction
@@ -173,5 +197,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     },
   });
 
-  return NextResponse.json({ ok: true, content: post.content });
+  return withUnlockCookie(
+    NextResponse.json({ ok: true, content: post.content }),
+    slug
+  );
 }
