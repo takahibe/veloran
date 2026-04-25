@@ -89,36 +89,57 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
-## Session resume notes (last updated 2026-04-21)
+## Session resume notes (last updated 2026-04-25)
 
-**Progress:** Day 2 of 20 complete. Committed as `Day 2: Privy auth, Prisma schema, dashboard shell`.
+**Progress:** Week 1 complete (Days 1–6 + creator bypass). Human-payment story is real on devnet — demo beats 1–4 bookable.
 
-**What exists and works:**
-- Next.js 16.2.4 + Tailwind 4 scaffold
-- Prisma 6 schema (`Creator`, `Post`, `Unlock`) + SQLite dev.db migrated
-- Privy provider on `@privy-io/react-auth@3.22.1` with Solana-only embedded wallets
-- `/` landing page with sign-in CTA
-- `/dashboard` client component that upserts Creator via `/api/me`
-- `POST/GET /api/me` verifies Privy bearer token
-- Routes compile: `GET /` and `/dashboard` both return 200
+**Latest commits:**
+- `1100b26` — Creator bypass on /p/[slug]
+- `094fc0c` — Day 6: signed unlock cookie (refresh-safe)
+- `22e0752` — Fix Privy solana:devnet RPC config
+- `d1c48ae` — Day 5: real USDC unlock on devnet
+- `a661c8e` — Day 4: public paywall page
+- (Day 3 + earlier)
 
-**Known discovery (unverified):** `x402@0.7.3` is a transitive dep of Privy — may obviate separate x402 SDK install. Verify on Apr 29 spike day.
+**What works end-to-end:**
+- Privy email login → embedded Solana devnet wallet (auto-created)
+- `/dashboard`: creator profile + post list + unlock counts
+- `/post/new`: title/preview/content/price form, slug auto-generated
+- `/p/[slug]`: public paywall page; creator sees content directly (banner), reader sees blurred + Unlock button
+- Real USDC SPL transfer reader → creator on devnet via `useSignAndSendTransaction`
+- Server verifies tx (creator ATA delta + reader ATA debit), creates `Unlock` row, sets HMAC-signed cookie `vlr_unlock_<slug>` (7d TTL)
+- Refresh-safe: server reads cookie, renders unlocked
+- Solscan tx link shown after fresh unlock
+- Existing test post: slug `why-i-m-long-sol-into-fomc-gli90`, $0.50
 
-**Known version mismatches from training data:**
-- Next.js 16 (not 15) — read `node_modules/next/dist/docs/` before writing page code
-- Tailwind 4 (not 3) — different config file structure
-- Prisma 6 (downgraded from 7 which requires new `prisma.config.ts` adapter API)
+**Known infra notes:**
+- `NEXT_PUBLIC_HELIUS_RPC_URL` still has placeholder — falls back to `api.devnet.solana.com`. User can drop key in for better rate limits.
+- `SESSION_SECRET` still the dev-only string — fine until prod
+- `ANTHROPIC_API_KEY` still placeholder — needed when we build the Claude preview generator
+- `x402@0.7.3` transitive dep of Privy — verify on Apr 29 SDK spike
 
-**Blocked on user action when session resumes:**
-1. User needs to paste Privy App Secret into `veloran/.env.local` (replacing `PASTE_YOUR_PRIVY_APP_SECRET_HERE`)
-2. User needs to test login flow at `localhost:3000` and confirm Creator row is created
-3. If step 2 fails, debug before starting Day 3
+**Version notes (still relevant):**
+- Next.js 16.2.4 (Promise params, async cookies()) — read `node_modules/next/dist/docs/` before page code
+- Tailwind 4 (PostCSS plugin, no tailwind.config.js)
+- Prisma 6 (NOT 7 — schema.prisma has `url` directly)
+- React 19 / Privy 3.22.1 / @solana/web3.js 1.98 / @solana/spl-token 0.4
 
-**Next up (Day 3, Apr 22 per plan):**
-- Build `/post/new` form (title, content, price)
-- Add `POST /api/posts` route (authed, inserts Post)
-- Add post list to `/dashboard`
-- No Solana interactions yet — pure CRUD
+**Open decisions:**
+- WSL vs native Windows for Solana/Anchor toolchain — must decide before Apr 27 (Week 2 starts)
+
+**Next up (user picked Option C: lower-effort polish before Anchor):**
+Pending choice between:
+1. Landing page glow-up (~60 min, high demo value)
+2. Claude preview generator (~45 min)
+3. Earnings card on dashboard (~45 min, high demo value)
+4. Delete post button (~30 min)
+
+Recommended order for demo video impact: 1 → 3 → 2 → 4. User to confirm on resume.
+
+**Punted / known UX gaps:**
+- No edit post route (delete-and-recreate is the workaround)
+- Dashboard route is shown to any logged-in user, not just creators (fine for MVP)
+- No rate limiting on `/api/posts` or `/api/unlock` (acceptable for hackathon devnet demo)
 
 **How to resume dev server:**
 ```
@@ -126,13 +147,10 @@ cd "C:\Users\User\CLAUDE CODE\Veloran Capital\veloran"
 npm run dev
 ```
 
-**Files created this session:**
-- `lib/db.ts` — Prisma singleton
-- `lib/privy-server.ts` — token verification helper
-- `components/Providers.tsx` — PrivyProvider wrapper
-- `components/LoginButton.tsx` — landing page CTA
-- `components/DashboardClient.tsx` — gated dashboard client component
-- `app/dashboard/page.tsx`, `app/api/me/route.ts`
-- `prisma/schema.prisma`, `prisma/dev.db`, `prisma/migrations/20260420162738_init/`
-- `.env`, `.env.local`, `.env.example`
+**Key files (current map):**
+- Pages: `app/page.tsx`, `app/dashboard/page.tsx`, `app/post/new/page.tsx`, `app/p/[slug]/page.tsx`
+- API: `app/api/me/route.ts`, `app/api/posts/route.ts`, `app/api/unlock/[slug]/route.ts`
+- Lib: `lib/db.ts`, `lib/privy-server.ts`, `lib/solana.ts`, `lib/content-gate.ts`, `lib/slug.ts`
+- Components: `Providers.tsx`, `LoginButton.tsx`, `DashboardClient.tsx`, `NewPostClient.tsx`, `PaywallGate.tsx`
+- Schema: `prisma/schema.prisma` (Creator, Post, Unlock)
 
