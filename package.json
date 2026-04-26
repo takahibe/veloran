@@ -10,6 +10,7 @@
     "ai-reader": "tsx scripts/ai-reader.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
     "@coral-xyz/anchor": "^0.32.1",
     "@prisma/client": "^6.19.3",
     "@privy-io/react-auth": "^3.22.1",

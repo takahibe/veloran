@@ -15,6 +15,37 @@ export function NewPostClient() {
   const [priceUsd, setPriceUsd] = useState("0.50");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  async function generatePreview() {
+    setGenerateError(null);
+    if (content.trim().length < 30) {
+      setGenerateError("Write your gated content first (at least 30 chars).");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const token = await getAccessToken();
+      const res = await fetch("/api/preview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? `Failed (${res.status})`);
+      setPreview(body.preview);
+    } catch (e) {
+      setGenerateError(
+        e instanceof Error ? e.message : "Preview generation failed"
+      );
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   useEffect(() => {
     if (ready && !authenticated) router.push("/");
@@ -86,22 +117,6 @@ export function NewPostClient() {
         </Field>
 
         <Field
-          label="Preview"
-          hint="One-line teaser shown to non-paying readers."
-          required
-        >
-          <input
-            value={preview}
-            onChange={(e) => setPreview(e.target.value)}
-            maxLength={240}
-            placeholder="Why I'm long SOL into next week's FOMC"
-            className="field"
-            required
-            minLength={5}
-          />
-        </Field>
-
-        <Field
           label="Gated content"
           hint="Markdown supported. Delivered only after payment."
           required
@@ -116,6 +131,63 @@ export function NewPostClient() {
             minLength={10}
           />
         </Field>
+
+        <label className="block">
+          <div className="mb-1.5 flex items-baseline justify-between gap-3">
+            <span className="text-sm font-medium text-neutral-200">
+              Preview
+              <span className="text-violet-400 ml-1">*</span>
+            </span>
+            <button
+              type="button"
+              onClick={generatePreview}
+              disabled={generating || content.trim().length < 30}
+              className="text-xs text-violet-300 hover:text-violet-200 disabled:text-neutral-600 disabled:cursor-not-allowed transition flex items-center gap-1.5"
+              title={
+                content.trim().length < 30
+                  ? "Write your gated content first (≥ 30 chars)"
+                  : "Generate a one-line teaser with Claude"
+              }
+            >
+              {generating ? (
+                <>
+                  <svg
+                    className="animate-spin"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="12" cy="12" r="9" opacity="0.25" />
+                    <path d="M21 12a9 9 0 0 0-9-9" />
+                  </svg>
+                  Generating…
+                </>
+              ) : (
+                <>✨ Generate with Claude</>
+              )}
+            </button>
+          </div>
+          <input
+            value={preview}
+            onChange={(e) => setPreview(e.target.value)}
+            maxLength={240}
+            placeholder="Why I'm long SOL into next week's FOMC"
+            className="field"
+            required
+            minLength={5}
+          />
+          <div className="mt-1.5 flex items-baseline justify-between gap-3">
+            <span className="text-xs text-neutral-500">
+              One-line teaser shown to non-paying readers.
+            </span>
+            {generateError && (
+              <span className="text-xs text-red-400">{generateError}</span>
+            )}
+          </div>
+        </label>
 
         <Field label="Price (USDC)" hint="e.g. 0.50 for fifty cents." required>
           <div className="relative">
