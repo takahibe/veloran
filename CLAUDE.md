@@ -89,11 +89,13 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
-## Session resume notes (last updated 2026-04-28, end of Week 2 day 5)
+## Session resume notes (last updated 2026-04-28, end of Week 2 day 6)
 
-**Progress:** Week 2 most of the way through. **All 8 demo beats are now individually testable on devnet.** Schedule: ~3 days ahead of plan.
+**Progress:** All planned features built. ~4 days ahead of plan. Remaining work is publishing (deploy, deck, video, submit).
 
-**Latest commits (all in WSL only — Windows origin still at 2b27899):**
+**Latest commits (WSL only — Windows origin still at 2b27899):**
+- `e581a6f` — Day 6 W2: Claude preview generator on /post/new
+- `10db36c` — Session save (Apr 28): Week 2 day 5 complete
 - `1fd5bf2` — Day 5 W2: AI reader script + dev send-usdc helper
 - `dfecf98` — Day 4 W2: Creator earnings dashboard
 - `3637649` — Day 3 W2: x402-style endpoint /api/x402/[slug]
@@ -173,22 +175,41 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 - ✅ Delete post button (same commit)
 - ⏭️ Still available: Claude preview generator (~45 min) — needs ANTHROPIC_API_KEY in .env.local
 
-**Next session (Apr 29+ per plan, but we're already at "May 1" work):**
-What's left from the plan:
-- **Claude preview generator** (May 3 work) — `/api/preview` route + button on `/post/new`
-- **Vercel deploy** (May 5) — Postgres migration, env vars, smoke-test the live URL
-- **Pitch deck** (May 6) — 10 slides
-- **Demo video** (May 7) — Loom recording, scripted voiceover
-- **Submit** (May 9–10)
+**Next session — publishing phase:**
+1. **GitHub repo + Vercel deploy** (~60–90 min) — biggest risk surface. SQLite → Vercel Postgres migration, env-var checklist, build/runtime fixes. **Resolve the WSL-vs-Windows origin issue here**: create GitHub repo, push WSL → GitHub, set both Windows + WSL clones to use GitHub as origin. Stop using the file:// remote.
+2. **Internal dress rehearsal** — full demo end-to-end on the live URL
+3. **Pitch deck** (~90 min) — 10 slides per the plan's "Verification (the demo script)" section
+4. **Demo video** (~60 min) — 2-min Loom, scripted voiceover, 8 beats
+5. **Submit** (target May 9, deadline May 10)
 
-Optional polish that could still land:
-- Agent earnings PDA on-chain (current dashboard pulls from SQLite Unlock table; works for demo but "off-chain" reading)
-- Bring `dev/send-usdc` behind an admin gate (currently anyone logged in can send their own USDC, which is actually fine UX-wise)
-- Multi-post AI reader: `npm run ai-reader -- --all` reads every paywall
+**Vercel deploy gotchas to remember:**
+- Env vars only load on boot — every change = redeploy
+- ANTHROPIC_API_KEY, NEXT_PUBLIC_PRIVY_APP_ID, PRIVY_APP_SECRET, NEXT_PUBLIC_HELIUS_RPC_URL, SESSION_SECRET, DATABASE_URL all need to land in Vercel project settings
+- DATABASE_URL switches from `file:./dev.db` to a Vercel Postgres connection string. Schema's `provider` line in `prisma/schema.prisma` will need to flip from `sqlite` to `postgresql`
+- The `prisma/dev.db` file is local only — production starts with empty DB; user needs to log in fresh + create demo posts on prod
+- Build command: `prisma generate && next build` (currently just `next build` — Vercel may need `prisma generate` before build)
+- The Anchor `target/` directory is gitignored; Vercel doesn't need it (the Next.js app only imports the IDL JSON, which IS committed at lib/idl/)
 
-**Faucet pain note:** Circle's devnet USDC faucet (https://faucet.circle.com) was unreachable on Apr 28. Fallback flow built and worked: `dev/send-usdc` page lets the human Privy wallet bankroll any test address. Use this whenever a fresh test wallet needs USDC — much faster than chasing faucets.
+**Optional polish still on the shelf (none blocking):**
+- Agent earnings PDA on-chain (current dashboard pulls from SQLite; "off-chain" reading)
+- Bring `dev/send-usdc` behind an admin gate (currently anyone logged in can send their OWN USDC — actually fine UX)
+- Multi-post AI reader: `npm run ai-reader -- --all` reads every paywall in sequence
+- Rename Windows folder from "Veloran Capital" to just "Veloran"
 
-**One open infra question:** Windows origin remote is still at `2b27899`. WSL has 6 commits ahead. Resolve before Vercel deploy (May 5) so GitHub remote can become the source of truth. Likely path: create a GitHub repo, push WSL → GitHub, change origin on Windows side to GitHub too. Don't bother with file-remote sync.
+**Demo dependencies that must work on the live URL:**
+- Privy login flow (test with both fresh + existing emails)
+- Helius RPC (or fall back to api.devnet.solana.com — already coded)
+- USDC faucets (Circle's was flaky Apr 28; `/dev/send-usdc` is the bypass)
+- AI reader script connects to live URL via `VELORAN_BASE_URL=<vercel-url>`
+
+**Faucet pain note:** Circle's devnet USDC faucet (https://faucet.circle.com) was unreachable on Apr 28. Fallback `/dev/send-usdc` lets the human Privy wallet bankroll any test address. Use this whenever a fresh test wallet needs USDC.
+
+**Demo artifacts to remember:**
+- Test post: `/p/why-i-m-long-sol-into-fomc-gli90` ($0.50)
+- Program ID: `2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS`
+- Treasury: `DgGYE7boZTEwrotFsYS9bFYsrgpz8TC76cXCZ8GcFKnP`
+- Agent address: `3P6VDakhDkEhweHN6uz96RjtzoevGZNndFU3EoYLVmYB` (~1.5 USDC remaining after Apr 28 testing)
+- Human reader Privy wallet: `9Y59DuDPLunps2ripujxYUXgytycvfRvwgeJHh8Tm2TZ` (~5.5 USDC remaining)
 
 **Punted / known UX gaps:**
 - No edit post route (delete-and-recreate is the workaround)
