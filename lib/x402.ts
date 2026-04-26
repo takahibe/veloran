@@ -42,7 +42,12 @@ export type PaymentRequirements = {
   maxAmountRequired: string;
   resource: string;
   description: string;
-  payTo: { creatorAta: string; platformAta: string };
+  payTo: {
+    creator: string;
+    creatorAta: string;
+    platform: string;
+    platformAta: string;
+  };
   extra: {
     programId: string;
     splitBps: { creator: number; platform: number };
@@ -68,7 +73,12 @@ export function buildPaymentRequirements(
     maxAmountRequired: String(post.priceUsdc),
     resource: `/api/x402/${post.slug}`,
     description: `Unlock "${post.preview}" — pays creator (95%) + Veloran (5%) via on-chain split`,
-    payTo: { creatorAta, platformAta },
+    payTo: {
+      creator: post.creator.solanaAddress,
+      creatorAta,
+      platform: VELORAN_TREASURY.toBase58(),
+      platformAta,
+    },
     extra: {
       programId: VELORAN_PROGRAM_ID.toBase58(),
       splitBps: {
