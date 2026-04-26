@@ -89,18 +89,32 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
-## Session resume notes (last updated 2026-04-25, end of Week 1 + polish pass)
+## Session resume notes (last updated 2026-04-28, end of Week 2 day 5)
 
-**Progress:** Week 1 complete (Days 1–6 + creator bypass) + polish pass (landing page glow-up + delete posts). Human-payment story is real on devnet — demo beats 1–4 bookable. UI is demo-ready.
+**Progress:** Week 2 most of the way through. **All 8 demo beats are now individually testable on devnet.** Schedule: ~3 days ahead of plan.
 
-**Latest commits:**
-- `707777f` — Polish: landing page glow-up + delete post button
-- `1100b26` — Creator bypass on /p/[slug]
-- `094fc0c` — Day 6: signed unlock cookie (refresh-safe)
-- `22e0752` — Fix Privy solana:devnet RPC config
-- `d1c48ae` — Day 5: real USDC unlock on devnet
-- `a661c8e` — Day 4: public paywall page
-- (Day 3 + earlier)
+**Latest commits (all in WSL only — Windows origin still at 2b27899):**
+- `1fd5bf2` — Day 5 W2: AI reader script + dev send-usdc helper
+- `dfecf98` — Day 4 W2: Creator earnings dashboard
+- `3637649` — Day 3 W2: x402-style endpoint /api/x402/[slug]
+- `1ad791c` — Day 2 W2: route unlock through Anchor program
+- `59359a3` — Day 1 W2: Anchor pay_for_content deployed to devnet
+- `f195f72` — Session save: WSL toolchain installed
+- (Week 1 history above this in Windows origin)
+
+**End-to-end verified beats:**
+- Beat 1–4 (human story): browser → Privy → pay 0.5 USDC → content reveals + cookie persists
+- Beat 5 (agent story): `npm run ai-reader -- <slug>` → 402 challenge → on-chain pay → content
+- Beat 6 (earnings): dashboard EarningsPanel shows lifetime $ + human/agent pill counts
+- Beat 7 (Solscan): every unlock tx visible at `solscan.io/tx/<sig>?cluster=devnet`, program at `solscan.io/account/2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS?cluster=devnet`
+- Beat 8 (closer): pure pitch, no code
+
+**Devnet artifacts:**
+- Program ID: `2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS`
+- Treasury: `DgGYE7boZTEwrotFsYS9bFYsrgpz8TC76cXCZ8GcFKnP` (= deploy keypair)
+- Test post slug: `why-i-m-long-sol-into-fomc-gli90` ($0.50)
+- Human reader Privy wallet: `9Y59DuDPLunps2ripujxYUXgytycvfRvwgeJHh8Tm2TZ` (~7.5 USDC remaining)
+- Agent keypair file: `~/.config/solana/agent.json`, address `3P6VDakhDkEhweHN6uz96RjtzoevGZNndFU3EoYLVmYB`
 
 **What works end-to-end:**
 - Privy email login → embedded Solana devnet wallet (auto-created)
@@ -155,17 +169,26 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 **No commits made in WSL yet.** All Anchor scaffold files are uncommitted in `~/veloran`.
 
 **Polish pass results (Apr 25 session):**
-- ✅ Landing page glow-up (commit 707777f) — hero with violet glow, gradient headline, 3-feature grid, "How it works" steps, footer
-- ✅ Delete post button (same commit) — DELETE /api/posts/[id] route w/ ownership check, transactional delete (Unlock rows then Post), trash icon on dashboard rows w/ confirm prompt
-- ⏭️ Skipped from polish menu (still available later): Claude preview generator (~45 min), Earnings card on dashboard (~45 min, high demo value)
+- ✅ Landing page glow-up (commit 707777f)
+- ✅ Delete post button (same commit)
+- ⏭️ Still available: Claude preview generator (~45 min) — needs ANTHROPIC_API_KEY in .env.local
 
-**Next session (Apr 27 per schedule, but we're 1 day ahead):**
-1. User: `cd ~/veloran && git pull origin main` to grab this CLAUDE.md update
-2. Claude: walk user through `anchor keys list` + `anchor keys sync` to lock in the real program ID
-3. Claude: write `pay_for_content` instruction in `programs/veloran-paywall/src/lib.rs` — ~100 lines: SPL token transfer w/ 95/5 split via CPI, optionally a Creator-PDA earnings counter
-4. `anchor build` + `anchor deploy --provider.cluster devnet` to push to devnet
-5. Commit Anchor scaffold + program + deployment artifacts
-6. Apr 28 work (TS client, route Next.js through the program) lands in the session after
+**Next session (Apr 29+ per plan, but we're already at "May 1" work):**
+What's left from the plan:
+- **Claude preview generator** (May 3 work) — `/api/preview` route + button on `/post/new`
+- **Vercel deploy** (May 5) — Postgres migration, env vars, smoke-test the live URL
+- **Pitch deck** (May 6) — 10 slides
+- **Demo video** (May 7) — Loom recording, scripted voiceover
+- **Submit** (May 9–10)
+
+Optional polish that could still land:
+- Agent earnings PDA on-chain (current dashboard pulls from SQLite Unlock table; works for demo but "off-chain" reading)
+- Bring `dev/send-usdc` behind an admin gate (currently anyone logged in can send their own USDC, which is actually fine UX-wise)
+- Multi-post AI reader: `npm run ai-reader -- --all` reads every paywall
+
+**Faucet pain note:** Circle's devnet USDC faucet (https://faucet.circle.com) was unreachable on Apr 28. Fallback flow built and worked: `dev/send-usdc` page lets the human Privy wallet bankroll any test address. Use this whenever a fresh test wallet needs USDC — much faster than chasing faucets.
+
+**One open infra question:** Windows origin remote is still at `2b27899`. WSL has 6 commits ahead. Resolve before Vercel deploy (May 5) so GitHub remote can become the source of truth. Likely path: create a GitHub repo, push WSL → GitHub, change origin on Windows side to GitHub too. Don't bother with file-remote sync.
 
 **Punted / known UX gaps:**
 - No edit post route (delete-and-recreate is the workaround)
