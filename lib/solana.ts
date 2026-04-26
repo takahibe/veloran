@@ -5,6 +5,17 @@ export const USDC_DEVNET_MINT = new PublicKey(
   "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
 );
 
+// Veloran 95/5-split program — deployed to devnet 2026-04-26
+export const VELORAN_PROGRAM_ID = new PublicKey(
+  "2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS"
+);
+
+// Veloran treasury wallet (receives the 5% platform cut)
+// Hardcoded in the Rust program; must match.
+export const VELORAN_TREASURY = new PublicKey(
+  "DgGYE7boZTEwrotFsYS9bFYsrgpz8TC76cXCZ8GcFKnP"
+);
+
 const PUBLIC_DEVNET_FALLBACK = "https://api.devnet.solana.com";
 
 function resolveRpcUrl(envValue: string | undefined): string {

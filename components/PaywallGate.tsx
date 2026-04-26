@@ -14,10 +14,14 @@ import {
 } from "@solana/web3.js";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
-  createTransferCheckedInstruction,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import { PUBLIC_RPC_URL, USDC_DEVNET_MINT } from "@/lib/solana";
+import {
+  PUBLIC_RPC_URL,
+  USDC_DEVNET_MINT,
+  VELORAN_TREASURY,
+} from "@/lib/solana";
+import { buildPayForContentIx } from "@/lib/anchor-client";
 
 type Props = {
   slug: string;
@@ -29,8 +33,6 @@ type Props = {
 };
 
 type Status = "idle" | "paying" | "verifying" | "unlocked" | "error";
-
-const USDC_DECIMALS = 6;
 
 export function PaywallGate({
   slug,
@@ -79,24 +81,36 @@ export function PaywallGate({
         USDC_DEVNET_MINT,
         creator
       );
+      const platformAta = getAssociatedTokenAddressSync(
+        USDC_DEVNET_MINT,
+        VELORAN_TREASURY
+      );
 
-      // Build instructions: idempotently create creator's USDC ATA if
-      // missing, then transfer the price. Reader pays the rent for the
-      // ATA creation; on devnet this is harmless.
+      // Build instructions: idempotently create creator + platform USDC
+      // ATAs (reader pays rent if they're missing), then call our
+      // Anchor program to do the 95/5 split atomically.
       const ixs = [
         createAssociatedTokenAccountIdempotentInstruction(
-          reader, // payer
+          reader,
           creatorAta,
-          creator, // owner
+          creator,
           USDC_DEVNET_MINT
         ),
-        createTransferCheckedInstruction(
-          readerAta,
-          USDC_DEVNET_MINT,
-          creatorAta,
-          reader, // owner / signer
-          BigInt(priceUsdc),
-          USDC_DECIMALS
+        createAssociatedTokenAccountIdempotentInstruction(
+          reader,
+          platformAta,
+          VELORAN_TREASURY,
+          USDC_DEVNET_MINT
+        ),
+        buildPayForContentIx(
+          {
+            reader,
+            readerAta,
+            creatorAta,
+            platformAta,
+            mint: USDC_DEVNET_MINT,
+          },
+          BigInt(priceUsdc)
         ),
       ];
 

@@ -3,7 +3,12 @@ import { PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { prisma } from "@/lib/db";
 import { verifyPrivyToken } from "@/lib/privy-server";
-import { getServerConnection, USDC_DEVNET_MINT } from "@/lib/solana";
+import {
+  getServerConnection,
+  USDC_DEVNET_MINT,
+  VELORAN_PROGRAM_ID,
+  VELORAN_TREASURY,
+} from "@/lib/solana";
 import {
   signUnlockToken,
   unlockCookieName,
@@ -117,14 +122,27 @@ export async function POST(req: NextRequest, { params }: Params) {
     USDC_DEVNET_MINT,
     readerPk
   ).toBase58();
+  const platformAta = getAssociatedTokenAddressSync(
+    USDC_DEVNET_MINT,
+    VELORAN_TREASURY
+  ).toBase58();
 
-  // Walk pre/post token balances to confirm: creator received priceUsdc
-  // micro-USDC AND it came from the reader's ATA.
-  const pre = tx.meta?.preTokenBalances ?? [];
-  const post_ = tx.meta?.postTokenBalances ?? [];
+  // Confirm the tx actually invoked our Anchor program — otherwise an
+  // attacker could craft a raw SPL transfer and bypass the on-chain split.
   const accountKeys = tx.transaction.message.accountKeys.map((k) =>
     k.pubkey.toBase58()
   );
+  if (!accountKeys.includes(VELORAN_PROGRAM_ID.toBase58())) {
+    return NextResponse.json(
+      { error: "Transaction did not invoke the Veloran program" },
+      { status: 400 }
+    );
+  }
+
+  // Walk pre/post token balances to confirm the 95/5 split landed:
+  // creator >= creator_cut, platform >= platform_cut, sum >= price.
+  const pre = tx.meta?.preTokenBalances ?? [];
+  const post_ = tx.meta?.postTokenBalances ?? [];
 
   const balanceFor = (
     arr: typeof pre,
@@ -142,48 +160,66 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const creatorAtaIdx = accountKeys.indexOf(creatorAta);
   const readerAtaIdx = accountKeys.indexOf(readerAta);
+  const platformAtaIdx = accountKeys.indexOf(platformAta);
   if (creatorAtaIdx === -1) {
     return NextResponse.json(
       { error: "Creator USDC account not in transaction" },
       { status: 400 }
     );
   }
-
-  const creatorPreBal = balanceFor(
-    pre,
-    post.creator.solanaAddress,
-    creatorAtaIdx
-  );
-  const creatorPostBal = balanceFor(
-    post_,
-    post.creator.solanaAddress,
-    creatorAtaIdx
-  );
-  const creatorDelta = creatorPostBal - creatorPreBal;
-
-  if (creatorDelta < BigInt(post.priceUsdc)) {
+  if (platformAtaIdx === -1) {
     return NextResponse.json(
-      {
-        error: `Creator received ${creatorDelta} micro-USDC, expected ${post.priceUsdc}`,
-      },
+      { error: "Platform USDC account not in transaction" },
       { status: 400 }
     );
   }
 
-  // Confirm reader is the source (their ATA balance went down)
+  // Mirror the program's split math (PLATFORM_BPS=500, denom=10_000).
+  const price = BigInt(post.priceUsdc);
+  const expectedPlatform = (price * 500n) / 10_000n;
+  const expectedCreator = price - expectedPlatform;
+
+  const creatorDelta =
+    balanceFor(post_, post.creator.solanaAddress, creatorAtaIdx) -
+    balanceFor(pre, post.creator.solanaAddress, creatorAtaIdx);
+  const platformDelta =
+    balanceFor(post_, VELORAN_TREASURY.toBase58(), platformAtaIdx) -
+    balanceFor(pre, VELORAN_TREASURY.toBase58(), platformAtaIdx);
+
+  if (creatorDelta < expectedCreator) {
+    return NextResponse.json(
+      {
+        error: `Creator received ${creatorDelta} micro-USDC, expected >= ${expectedCreator}`,
+      },
+      { status: 400 }
+    );
+  }
+  if (platformDelta < expectedPlatform) {
+    return NextResponse.json(
+      {
+        error: `Platform received ${platformDelta} micro-USDC, expected >= ${expectedPlatform}`,
+      },
+      { status: 400 }
+    );
+  }
+  if (creatorDelta + platformDelta < price) {
+    return NextResponse.json(
+      { error: "Combined creator + platform credit is less than the price" },
+      { status: 400 }
+    );
+  }
+
+  // Confirm reader is the funder (their ATA balance went down by full price)
   if (readerAtaIdx !== -1) {
     const readerPre = balanceFor(pre, reader.solanaAddress, readerAtaIdx);
     const readerPost = balanceFor(post_, reader.solanaAddress, readerAtaIdx);
-    if (readerPre - readerPost < BigInt(post.priceUsdc)) {
+    if (readerPre - readerPost < price) {
       return NextResponse.json(
         { error: "Reader wallet did not fund this transfer" },
         { status: 400 }
       );
     }
   }
-  // (If reader ATA didn't exist before tx, that's fine — but then they
-  // can't be the funder, so we'd reject. Here we only continue if their
-  // ATA was present and decreased.)
 
   // 5. Persist unlock
   await prisma.unlock.create({

@@ -1,0 +1,133 @@
+{
+  "address": "2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS",
+  "metadata": {
+    "name": "veloran_paywall",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Veloran 95/5 paywall split program"
+  },
+  "instructions": [
+    {
+      "name": "pay_for_content",
+      "docs": [
+        "Reader pays USDC for paywalled content. The amount is split",
+        "95% to the creator and 5% to the Veloran treasury, both routed",
+        "via SPL transferChecked CPIs in a single atomic transaction."
+      ],
+      "discriminator": [
+        175,
+        34,
+        1,
+        20,
+        153,
+        78,
+        194,
+        215
+      ],
+      "accounts": [
+        {
+          "name": "reader",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "reader_ata",
+          "writable": true
+        },
+        {
+          "name": "creator_ata",
+          "writable": true
+        },
+        {
+          "name": "platform_ata",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "PaymentSplit",
+      "discriminator": [
+        0,
+        76,
+        27,
+        220,
+        229,
+        201,
+        8,
+        81
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6001,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6002,
+      "name": "WrongMint",
+      "msg": "Token account mint must be USDC"
+    },
+    {
+      "code": 6003,
+      "name": "WrongOwner",
+      "msg": "Reader does not own the source token account"
+    },
+    {
+      "code": 6004,
+      "name": "WrongTreasury",
+      "msg": "Platform ATA must be owned by the Veloran treasury"
+    }
+  ],
+  "types": [
+    {
+      "name": "PaymentSplit",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reader",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator_ata",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "creator_cut",
+            "type": "u64"
+          },
+          {
+            "name": "platform_cut",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}
