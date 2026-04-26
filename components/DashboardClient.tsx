@@ -24,12 +24,36 @@ type Post = {
   _count: { unlocks: number };
 };
 
+type RecentUnlock = {
+  id: string;
+  amountUsdc: number;
+  readerType: string;
+  readerAddress: string;
+  txSignature: string;
+  createdAt: string;
+  postSlug: string;
+  postTitle: string;
+};
+
+type Earnings = {
+  totals: {
+    gross: string;
+    creator: string;
+    platform: string;
+    unlockCount: number;
+    humanCount: number;
+    agentCount: number;
+  };
+  recent: RecentUnlock[];
+};
+
 export function DashboardClient() {
   const { ready, authenticated, user, logout, getAccessToken } = usePrivy();
   const { wallets } = useWallets();
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [posts, setPosts] = useState<Post[] | null>(null);
+  const [earnings, setEarnings] = useState<Earnings | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -80,9 +104,24 @@ export function DashboardClient() {
     }
   }, [authenticated, getAccessToken]);
 
+  const loadEarnings = useCallback(async () => {
+    if (!authenticated) return;
+    try {
+      const token = await getAccessToken();
+      const res = await fetch("/api/earnings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`api/earnings: ${res.status}`);
+      setEarnings((await res.json()) as Earnings);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load earnings");
+    }
+  }, [authenticated, getAccessToken]);
+
   useEffect(() => {
     loadPosts();
-  }, [loadPosts]);
+    loadEarnings();
+  }, [loadPosts, loadEarnings]);
 
   if (!ready || !authenticated) {
     return (
@@ -128,6 +167,8 @@ export function DashboardClient() {
         />
         <Card label="Posts published" value={String(postCount)} />
       </section>
+
+      {earnings && <EarningsPanel earnings={earnings} />}
 
       {posts === null ? (
         <p className="text-sm text-neutral-500">Loading posts…</p>
@@ -308,4 +349,119 @@ function Card({
 
 function truncate(addr: string) {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
+}
+
+function EarningsPanel({ earnings }: { earnings: Earnings }) {
+  const { totals, recent } = earnings;
+
+  if (totals.unlockCount === 0) {
+    return (
+      <section className="mb-10 rounded-xl border border-neutral-800 bg-neutral-900/40 p-6">
+        <p className="text-xs uppercase tracking-wider text-neutral-500">
+          Earnings
+        </p>
+        <p className="mt-2 text-neutral-400">
+          No unlocks yet. Share a paywall link to start earning.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-10 rounded-xl border border-violet-700/30 bg-gradient-to-br from-violet-950/30 via-neutral-900/40 to-neutral-900/40 p-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-violet-300">
+            Lifetime earnings · creator share
+          </p>
+          <p className="mt-2 text-4xl sm:text-5xl font-semibold tracking-tight">
+            ${microUsdcToUsd(Number(totals.creator))}
+          </p>
+          <p className="mt-2 text-sm text-neutral-400">
+            From{" "}
+            <span className="text-neutral-200">
+              {totals.unlockCount} unlock{totals.unlockCount === 1 ? "" : "s"}
+            </span>{" "}
+            · gross{" "}
+            <span className="text-neutral-300">
+              ${microUsdcToUsd(Number(totals.gross))}
+            </span>{" "}
+            · 5% platform fee{" "}
+            <span className="text-neutral-500">
+              ${microUsdcToUsd(Number(totals.platform))}
+            </span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Pill label={`${totals.humanCount} human`} tone="violet" />
+          <Pill label={`${totals.agentCount} agent`} tone="cyan" />
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-neutral-800 pt-5">
+        <p className="text-xs uppercase tracking-wider text-neutral-500 mb-3">
+          Recent unlocks
+        </p>
+        <ul className="space-y-2">
+          {recent.map((u) => (
+            <li
+              key={u.id}
+              className="flex items-center justify-between gap-4 text-sm"
+            >
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/p/${u.postSlug}`}
+                  className="text-neutral-200 hover:text-violet-300 truncate block"
+                >
+                  {u.postTitle}
+                </Link>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {u.readerType === "agent" ? "🤖 Agent" : "👤 Human"} ·{" "}
+                  {new Date(u.createdAt).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-neutral-200">
+                  +${microUsdcToUsd(u.amountUsdc)}
+                </p>
+                <a
+                  href={`https://solscan.io/tx/${u.txSignature}?cluster=devnet`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-violet-400 hover:text-violet-300 font-mono"
+                >
+                  {u.txSignature.slice(0, 6)}…{u.txSignature.slice(-4)} ↗
+                </a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Pill({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "violet" | "cyan";
+}) {
+  const cls =
+    tone === "violet"
+      ? "border-violet-700/40 bg-violet-950/40 text-violet-200"
+      : "border-cyan-700/40 bg-cyan-950/40 text-cyan-200";
+  return (
+    <span
+      className={`text-xs px-2.5 py-1 rounded-full border ${cls}`}
+    >
+      {label}
+    </span>
+  );
 }
