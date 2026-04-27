@@ -167,23 +167,24 @@ export type VerifyResult =
   | { ok: true; creatorDelta: bigint; platformDelta: bigint; price: bigint }
   | { ok: false; status: number; error: string };
 
-type PostForVerification = {
-  priceUsdc: number;
-  creator: { solanaAddress: string };
-};
-
 /**
  * Pure verification: caller fetches the parsed tx, we walk it.
- * Confirms (1) tx invokes the Veloran program, (2) creator + platform
+ * Confirms (1) tx invokes the Veloran program, (2) recipient + platform
  * USDC ATAs received >= the program's split math, and (3) the claimed
  * payer's ATA is the source of funds.
+ *
+ * `recipientAddress` is the wallet that receives the 95% share. For
+ * per-post unlocks that's the post's creator. For subscriptions it's
+ * the creator being subscribed to. The split math is identical because
+ * the on-chain `pay_for_content` instruction is generic.
  */
 export function verifyOnChainPayment(args: {
   tx: ParsedTransactionWithMeta;
-  post: PostForVerification;
+  recipientAddress: string;
+  amountUsdc: number;
   expectedPayerAddress: string;
 }): VerifyResult {
-  const { tx, post, expectedPayerAddress } = args;
+  const { tx, recipientAddress, amountUsdc, expectedPayerAddress } = args;
 
   if (tx.meta?.err) {
     return { ok: false, status: 400, error: "Transaction failed on-chain" };
@@ -191,10 +192,10 @@ export function verifyOnChainPayment(args: {
 
   // Compute expected ATAs
   const payerPk = new PublicKey(expectedPayerAddress);
-  const creatorPk = new PublicKey(post.creator.solanaAddress);
-  const creatorAta = getAssociatedTokenAddressSync(
+  const recipientPk = new PublicKey(recipientAddress);
+  const recipientAta = getAssociatedTokenAddressSync(
     USDC_DEVNET_MINT,
-    creatorPk
+    recipientPk
   ).toBase58();
   const payerAta = getAssociatedTokenAddressSync(
     USDC_DEVNET_MINT,
@@ -233,14 +234,14 @@ export function verifyOnChainPayment(args: {
     return entry ? BigInt(entry.uiTokenAmount.amount) : 0n;
   };
 
-  const creatorAtaIdx = accountKeys.indexOf(creatorAta);
+  const recipientAtaIdx = accountKeys.indexOf(recipientAta);
   const platformAtaIdx = accountKeys.indexOf(platformAta);
   const payerAtaIdx = accountKeys.indexOf(payerAta);
-  if (creatorAtaIdx === -1) {
+  if (recipientAtaIdx === -1) {
     return {
       ok: false,
       status: 400,
-      error: "Creator USDC account not in transaction",
+      error: "Recipient USDC account not in transaction",
     };
   }
   if (platformAtaIdx === -1) {
@@ -251,13 +252,13 @@ export function verifyOnChainPayment(args: {
     };
   }
 
-  const price = BigInt(post.priceUsdc);
+  const price = BigInt(amountUsdc);
   const expectedPlatform = (price * PLATFORM_BPS) / BPS_DENOMINATOR;
   const expectedCreator = price - expectedPlatform;
 
   const creatorDelta =
-    balanceFor(post_, post.creator.solanaAddress, creatorAtaIdx) -
-    balanceFor(pre, post.creator.solanaAddress, creatorAtaIdx);
+    balanceFor(post_, recipientAddress, recipientAtaIdx) -
+    balanceFor(pre, recipientAddress, recipientAtaIdx);
   const platformDelta =
     balanceFor(post_, VELORAN_TREASURY.toBase58(), platformAtaIdx) -
     balanceFor(pre, VELORAN_TREASURY.toBase58(), platformAtaIdx);
@@ -266,7 +267,7 @@ export function verifyOnChainPayment(args: {
     return {
       ok: false,
       status: 400,
-      error: `Creator received ${creatorDelta} micro-USDC, expected >= ${expectedCreator}`,
+      error: `Recipient received ${creatorDelta} micro-USDC, expected >= ${expectedCreator}`,
     };
   }
   if (platformDelta < expectedPlatform) {
@@ -280,7 +281,7 @@ export function verifyOnChainPayment(args: {
     return {
       ok: false,
       status: 400,
-      error: "Combined creator + platform credit is less than the price",
+      error: "Combined recipient + platform credit is less than the price",
     };
   }
 

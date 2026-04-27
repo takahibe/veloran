@@ -109,10 +109,8 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const result = verifyOnChainPayment({
     tx,
-    post: {
-      priceUsdc: post.priceUsdc,
-      creator: { solanaAddress: post.creator.solanaAddress },
-    },
+    recipientAddress: post.creator.solanaAddress,
+    amountUsdc: post.priceUsdc,
     expectedPayerAddress: reader.solanaAddress,
   });
   if (!result.ok) {

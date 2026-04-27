@@ -23,6 +23,15 @@ model Creator {
 
   posts          Post[]
   unlocks        Unlock[]  @relation("UnlockedBy")
+
+  // Subscription tier this creator offers (monthly + yearly).
+  tier           SubscriptionTier?
+
+  // People who have subscribed to this creator.
+  subscribers    Subscription[] @relation("SubscribedTo")
+
+  // Subscriptions this user has *bought* from other creators.
+  subscribingTo  Subscription[] @relation("Subscribing")
 }
 
 // A paywalled piece of content.
@@ -40,6 +49,45 @@ model Post {
   creator        Creator  @relation(fields: [creatorId], references: [id])
 
   unlocks        Unlock[]
+}
+
+// A creator's subscription pricing. One row per creator. Either price can
+// be null = that plan is disabled. Active=false hides the tier entirely.
+model SubscriptionTier {
+  id           String   @id @default(cuid())
+  creatorId    String   @unique
+  creator      Creator  @relation(fields: [creatorId], references: [id])
+
+  monthlyPrice Int?     // micro-USDC; null = monthly disabled
+  yearlyPrice  Int?     // micro-USDC; null = yearly disabled
+  active       Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// One row per successful subscription payment. expiresAt is computed at
+// purchase time from `plan` (monthly = +30d, yearly = +365d).
+model Subscription {
+  id                  String   @id @default(cuid())
+
+  creatorId           String                                  // who's being subscribed to
+  creator             Creator  @relation("SubscribedTo", fields: [creatorId], references: [id])
+
+  // Logged-in user's Creator row. Null only if a future agent path adds subs.
+  subscriberCreatorId String?
+  subscriber          Creator? @relation("Subscribing", fields: [subscriberCreatorId], references: [id])
+  subscriberAddress   String                                  // payer pubkey (always recorded)
+
+  plan                String                                  // "monthly" | "yearly"
+  amountUsdc          Int
+
+  startsAt            DateTime @default(now())
+  expiresAt           DateTime
+  txSignature         String   @unique
+  createdAt           DateTime @default(now())
+
+  @@index([creatorId, subscriberAddress, expiresAt])
 }
 
 // One row per successful payment (human or agent).
