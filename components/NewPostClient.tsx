@@ -199,7 +199,7 @@ export function NewPostClient() {
               onChange={(e) => setPriceUsd(e.target.value)}
               inputMode="decimal"
               placeholder="0.50"
-              className="field pl-6"
+              className="field pl-7"
               required
             />
           </div>
