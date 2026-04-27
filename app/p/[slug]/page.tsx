@@ -4,7 +4,12 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { microUsdcToUsd } from "@/lib/slug";
 import { PaywallGate } from "@/components/PaywallGate";
-import { unlockCookieName, verifyUnlockToken } from "@/lib/content-gate";
+import {
+  unlockCookieName,
+  verifyUnlockToken,
+  subscriptionCookieName,
+  verifySubscriptionToken,
+} from "@/lib/content-gate";
 import { verifyPrivyCookie } from "@/lib/privy-server";
 import type { Metadata } from "next";
 
@@ -23,7 +28,19 @@ async function getPost(slug: string) {
       createdAt: true,
       creatorId: true,
       creator: {
-        select: { displayName: true, email: true, solanaAddress: true },
+        select: {
+          id: true,
+          displayName: true,
+          email: true,
+          solanaAddress: true,
+          tier: {
+            select: {
+              monthlyPrice: true,
+              yearlyPrice: true,
+              active: true,
+            },
+          },
+        },
       },
     },
   });
@@ -41,13 +58,25 @@ async function isViewerTheCreator(creatorId: string): Promise<boolean> {
   return me?.id === creatorId;
 }
 
+/**
+ * Two ways to render the content unlocked:
+ *   - Per-post unlock cookie (vlr_unlock_<slug>) for one-off payment
+ *   - Subscription cookie (vlr_sub_<creatorId>) covers all the
+ *     creator's posts for the plan duration
+ */
 async function getUnlockedContent(
   slug: string,
+  creatorId: string,
   content: string
 ): Promise<string | null> {
   const jar = await cookies();
-  const token = jar.get(unlockCookieName(slug))?.value;
-  return verifyUnlockToken(token, slug) ? content : null;
+  const unlockToken = jar.get(unlockCookieName(slug))?.value;
+  if (verifyUnlockToken(unlockToken, slug)) return content;
+
+  const subToken = jar.get(subscriptionCookieName(creatorId))?.value;
+  if (verifySubscriptionToken(subToken, creatorId)) return content;
+
+  return null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -74,7 +103,17 @@ export default async function PaywallPage({ params }: Props) {
   const isOwner = await isViewerTheCreator(post.creatorId);
   const initialContent = isOwner
     ? post.content
-    : await getUnlockedContent(post.slug, post.content);
+    : await getUnlockedContent(post.slug, post.creatorId, post.content);
+
+  // Surface the creator's subscription tier (if active) so the PaywallGate
+  // can render a "Subscribe" upsell alongside the per-post Unlock button.
+  const tier =
+    post.creator.tier && post.creator.tier.active
+      ? {
+          monthlyPrice: post.creator.tier.monthlyPrice,
+          yearlyPrice: post.creator.tier.yearlyPrice,
+        }
+      : null;
 
   const byline =
     post.creator.displayName ??
@@ -129,7 +168,9 @@ export default async function PaywallPage({ params }: Props) {
         priceUsd={microUsdcToUsd(post.priceUsdc)}
         priceUsdc={post.priceUsdc}
         creatorAddress={post.creator.solanaAddress}
+        creatorByline={byline}
         initialContent={initialContent}
+        tier={tier}
       />
 
       <p className="mt-8 text-center text-xs text-neutral-600">

@@ -16,20 +16,33 @@ import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
+import Link from "next/link";
 import {
   PUBLIC_RPC_URL,
   USDC_DEVNET_MINT,
   VELORAN_TREASURY,
 } from "@/lib/solana";
 import { buildPayForContentIx } from "@/lib/anchor-client";
+import { microUsdcToUsd } from "@/lib/slug";
 
 type Props = {
   slug: string;
   priceUsd: string;
   priceUsdc: number; // micro-USDC
   creatorAddress: string;
+  /** "by <byline>" for the Subscribe upsell label. */
+  creatorByline?: string;
   /** Server-verified content (cookie-gated). When present, gate starts unlocked. */
   initialContent?: string | null;
+  /**
+   * If the creator offers active subscriptions, this is the tier shape
+   * (either price may be null if that plan is disabled). Triggers a
+   * "Subscribe instead" link on the locked view.
+   */
+  tier?: {
+    monthlyPrice: number | null;
+    yearlyPrice: number | null;
+  } | null;
 };
 
 type Status = "idle" | "paying" | "verifying" | "unlocked" | "error";
@@ -39,7 +52,9 @@ export function PaywallGate({
   priceUsd,
   priceUsdc,
   creatorAddress,
+  creatorByline,
   initialContent,
+  tier,
 }: Props) {
   const { ready, authenticated, login, getAccessToken } = usePrivy();
   const { wallets } = useWallets();
@@ -203,6 +218,18 @@ export function PaywallGate({
           ? `Sign in to unlock for $${priceUsd}`
           : `Unlock for $${priceUsd} USDC`;
 
+  // Pick the cheapest available plan to advertise as the upsell hook
+  const subUpsell = (() => {
+    if (!tier) return null;
+    if (tier.monthlyPrice && tier.monthlyPrice > 0) {
+      return { plan: "month" as const, price: tier.monthlyPrice };
+    }
+    if (tier.yearlyPrice && tier.yearlyPrice > 0) {
+      return { plan: "year" as const, price: tier.yearlyPrice };
+    }
+    return null;
+  })();
+
   return (
     <div className="relative mt-10 rounded-xl border border-neutral-800 bg-neutral-900/40 overflow-hidden">
       <div className="p-6 select-none pointer-events-none">
@@ -234,6 +261,16 @@ export function PaywallGate({
         >
           {label}
         </button>
+        {subUpsell && (
+          <Link
+            href={`/c/${creatorAddress}`}
+            className="text-xs text-neutral-400 hover:text-violet-300 underline underline-offset-2"
+          >
+            …or subscribe to{creatorByline ? ` ${creatorByline}` : ""} for
+            {" $"}
+            {microUsdcToUsd(subUpsell.price)}/{subUpsell.plan}
+          </Link>
+        )}
         {error && (
           <p className="text-xs text-red-400 max-w-sm text-center px-4">
             {error}

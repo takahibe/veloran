@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { microUsdcToUsd } from "@/lib/slug";
+import { CreatorTierEditor } from "@/components/CreatorTierEditor";
 
 type Me = {
   id: string;
@@ -43,8 +44,24 @@ type Earnings = {
     unlockCount: number;
     humanCount: number;
     agentCount: number;
+    // New subscription breakdown (added in Day 2)
+    perPost?: string;
+    subscriptions?: string;
+    subscriberCount?: number;
+    activeSubscribers?: number;
   };
   recent: RecentUnlock[];
+  recentSubscriptions?: RecentSubscription[];
+};
+
+type RecentSubscription = {
+  id: string;
+  amountUsdc: number;
+  plan: string;
+  subscriberAddress: string;
+  txSignature: string;
+  createdAt: string;
+  expiresAt: string;
 };
 
 export function DashboardClient() {
@@ -173,6 +190,11 @@ export function DashboardClient() {
       </section>
 
       {earnings && <EarningsPanel earnings={earnings} />}
+
+      <CreatorTierEditor
+        creatorId={me?.id ?? null}
+        solanaAddress={me?.solanaAddress ?? null}
+      />
 
       {posts === null ? (
         <p className="text-sm text-neutral-500">Loading posts…</p>
@@ -356,9 +378,15 @@ function truncate(addr: string) {
 }
 
 function EarningsPanel({ earnings }: { earnings: Earnings }) {
-  const { totals, recent } = earnings;
+  const { totals, recent, recentSubscriptions } = earnings;
+  const subscriberCount = totals.subscriberCount ?? 0;
+  const activeSubscribers = totals.activeSubscribers ?? 0;
+  const perPostMicro = totals.perPost ? Number(totals.perPost) : null;
+  const subsMicro = totals.subscriptions ? Number(totals.subscriptions) : null;
+  const hasAnyRevenue =
+    totals.unlockCount > 0 || subscriberCount > 0;
 
-  if (totals.unlockCount === 0) {
+  if (!hasAnyRevenue) {
     return (
       <section className="mb-10 rounded-xl border border-neutral-800 bg-neutral-900/40 p-6">
         <p className="text-xs uppercase tracking-wider text-neutral-500">
@@ -385,7 +413,17 @@ function EarningsPanel({ earnings }: { earnings: Earnings }) {
             From{" "}
             <span className="text-neutral-200">
               {totals.unlockCount} unlock{totals.unlockCount === 1 ? "" : "s"}
-            </span>{" "}
+            </span>
+            {subscriberCount > 0 && (
+              <>
+                {" "}
+                +{" "}
+                <span className="text-neutral-200">
+                  {subscriberCount} subscription
+                  {subscriberCount === 1 ? "" : "s"}
+                </span>
+              </>
+            )}{" "}
             · gross{" "}
             <span className="text-neutral-300">
               ${microUsdcToUsd(Number(totals.gross))}
@@ -395,10 +433,22 @@ function EarningsPanel({ earnings }: { earnings: Earnings }) {
               ${microUsdcToUsd(Number(totals.platform))}
             </span>
           </p>
+          {subsMicro !== null && subsMicro > 0 && perPostMicro !== null && (
+            <p className="mt-1 text-xs text-neutral-500">
+              Per-post ${microUsdcToUsd(perPostMicro)} · Subscriptions $
+              {microUsdcToUsd(subsMicro)}
+            </p>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end">
           <Pill label={`${totals.humanCount} human`} tone="violet" />
           <Pill label={`${totals.agentCount} agent`} tone="cyan" />
+          {activeSubscribers > 0 && (
+            <Pill
+              label={`${activeSubscribers} active sub${activeSubscribers === 1 ? "" : "s"}`}
+              tone="violet"
+            />
+          )}
         </div>
       </div>
 
@@ -446,6 +496,65 @@ function EarningsPanel({ earnings }: { earnings: Earnings }) {
           ))}
         </ul>
       </div>
+
+      {recentSubscriptions && recentSubscriptions.length > 0 && (
+        <div className="mt-6 border-t border-neutral-800 pt-5">
+          <p className="text-xs uppercase tracking-wider text-neutral-500 mb-3">
+            Recent subscriptions
+          </p>
+          <ul className="space-y-2">
+            {recentSubscriptions.map((s) => {
+              const exp = new Date(s.expiresAt);
+              const isActive = exp > new Date();
+              return (
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between gap-4 text-sm"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-neutral-200 truncate">
+                      {s.plan === "yearly"
+                        ? "Yearly subscription"
+                        : "Monthly subscription"}{" "}
+                      <span className="text-xs text-neutral-500">
+                        from {s.subscriberAddress.slice(0, 4)}…
+                        {s.subscriberAddress.slice(-4)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      {isActive ? (
+                        <>
+                          ✅ Active until{" "}
+                          {exp.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </>
+                      ) : (
+                        <>⌛ Expired {exp.toLocaleDateString()}</>
+                      )}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-neutral-200">
+                      +${microUsdcToUsd(s.amountUsdc)}
+                    </p>
+                    <a
+                      href={`https://solscan.io/tx/${s.txSignature}?cluster=devnet`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-violet-400 hover:text-violet-300 font-mono"
+                    >
+                      {s.txSignature.slice(0, 6)}…{s.txSignature.slice(-4)} ↗
+                    </a>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }
