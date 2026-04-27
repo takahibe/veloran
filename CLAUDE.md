@@ -89,6 +89,55 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
+## Session resume notes (last updated 2026-04-27, mid-deploy to Vercel)
+
+**Where we stopped:** Neon Postgres is attached to Vercel and the schema is pushed. We were one click away from triggering the first real deploy + smoke testing the live URL.
+
+**Resume here next session — pick up at the redeploy step:**
+1. Open Vercel → project `veloran-paywall` → Deployments tab
+2. Trigger a redeploy (three-dot menu on the latest deployment → Redeploy) — needed so the build picks up the Neon-injected `DATABASE_URL`
+3. When deploy is "Ready", grab the live URL (e.g. `veloran-paywall.vercel.app`)
+4. Smoke-test on the live URL:
+   - Privy login (creates first Creator row in Neon)
+   - Create a paywall post (slug auto-generated)
+   - Open the slug in incognito → unlock with USDC → content reveals
+   - Dashboard shows earnings
+5. If all 4 pass → start pitch deck (10 slides) + record 2-min demo video → submit
+
+**What landed today (Apr 27):**
+- ✅ GitHub repo: `https://github.com/takahibe/veloran` (public)
+- ✅ WSL git remote pointed at GitHub, credentials stored in `~/.git-credentials`
+- ✅ Prisma schema flipped `sqlite` → `postgresql` (commit `018f2b2`)
+- ✅ Old SQLite migrations/ folder removed
+- ✅ `.npmrc` with `legacy-peer-deps=true` for Vercel CI (commit `7d37d38`)
+- ✅ `package.json`: `build` now runs `prisma generate && next build`; `postinstall` also runs `prisma generate`
+- ✅ Vercel project `veloran-paywall` created, GitHub-connected
+- ✅ All env vars added: NEXT_PUBLIC_PRIVY_APP_ID, PRIVY_APP_SECRET, NEXT_PUBLIC_SOLANA_NETWORK=devnet, NEXT_PUBLIC_HELIUS_RPC_URL, SESSION_SECRET (fresh prod secret, not the dev one), ANTHROPIC_API_KEY
+- ✅ Neon Postgres attached via Storage → injected DATABASE_URL + companions
+- ✅ `npx prisma db push` against Neon → tables created (verified: Creator, Post, Unlock)
+
+**New commits since last session save (now on GitHub):**
+- `7d37d38` — Add .npmrc with legacy-peer-deps=true for Vercel build
+- `018f2b2` — Switch Prisma provider to postgresql for Vercel deploy
+
+**Production-only env vars (Vercel project) — DO NOT commit these to repo:**
+- `SESSION_SECRET` = `6dAzKxjOxwY0ELwTmgClFKZ/9+sJSOdA7oRvaJBJsydWWyO10MYtBE65bya8RWFf` (regenerate with `openssl rand -base64 48` if leaked)
+- `DATABASE_URL` (Vercel-managed, pooled Neon URL)
+
+**Open items for the live URL once it works:**
+- Production DB starts empty — no test posts. User needs to log in fresh and create demo posts on prod.
+- Update the AI reader script env: `VELORAN_BASE_URL=<live-url> npm run ai-reader -- <slug>`
+- Privy dashboard: may need to add the production URL to Privy's "Allowed Origins" list (privy.io console → app settings)
+
+**One thing to double-check after deploy:** the `Anthropic()` SDK constructor in `app/api/preview/route.ts` reads `ANTHROPIC_API_KEY` from process.env automatically. Confirmed working locally. Should also work on Vercel since the env var is set.
+
+**Known good Postgres connection (use only for emergency `prisma db push` re-runs):** the pooled Neon URL is in the user's clipboard / Vercel storage tab; do NOT hard-code it anywhere. To re-push schema if it ever drifts:
+```bash
+DATABASE_URL='<pooled-neon-url>' npx prisma db push
+```
+
+---
+
 ## Session resume notes (last updated 2026-04-28, end of Week 2 day 6)
 
 **Progress:** All planned features built. ~4 days ahead of plan. Remaining work is publishing (deploy, deck, video, submit).
