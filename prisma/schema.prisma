@@ -1,12 +1,13 @@
 // Veloran database schema
-// SQLite for local dev; switch to postgresql for Vercel Postgres when deploying.
+// Postgres for prod (Vercel/Neon). Local dev can use Postgres too via Docker, or
+// override DATABASE_URL to a SQLite file for offline work.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
