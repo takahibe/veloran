@@ -4,10 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { microUsdcToUsd } from "@/lib/slug";
 import { SubscribeButton } from "@/components/SubscribeButton";
-import {
-  subscriptionCookieName,
-  verifySubscriptionToken,
-} from "@/lib/content-gate";
+import { verifyPrivyCookie } from "@/lib/privy-server";
 import type { Metadata } from "next";
 
 type Props = { params: Promise<{ address: string }> };
@@ -62,10 +59,36 @@ export default async function CreatorProfilePage({ params }: Props) {
   const byline =
     creator.displayName ?? creator.email?.split("@")[0] ?? "anon";
 
-  // Check if the visitor already has an active subscription cookie.
+  // Server-side: if the visitor is logged in, look up their actual active
+  // subscription so we can show the *real* plan + expiry (not just "yes
+  // there's a cookie"). The cookie alone doesn't carry plan info.
+  let activeSub: {
+    plan: string;
+    expiresAt: Date;
+    txSignature: string;
+  } | null = null;
+
   const jar = await cookies();
-  const subToken = jar.get(subscriptionCookieName(creator.id))?.value;
-  const alreadySubscribed = verifySubscriptionToken(subToken, creator.id);
+  const privyToken = jar.get("privy-token")?.value;
+  const claims = await verifyPrivyCookie(privyToken);
+  if (claims) {
+    const me = await prisma.creator.findUnique({
+      where: { privyUserId: claims.userId },
+      select: { id: true },
+    });
+    if (me) {
+      const sub = await prisma.subscription.findFirst({
+        where: {
+          creatorId: creator.id,
+          subscriberCreatorId: me.id,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { expiresAt: "desc" },
+        select: { plan: true, expiresAt: true, txSignature: true },
+      });
+      activeSub = sub;
+    }
+  }
 
   const tier =
     creator.tier && creator.tier.active ? creator.tier : null;
@@ -92,7 +115,39 @@ export default async function CreatorProfilePage({ params }: Props) {
       </header>
 
       {/* Subscription card */}
-      {offersSubscription ? (
+      {activeSub ? (
+        <section className="mt-10 rounded-xl border border-violet-700/40 bg-violet-950/20 p-6">
+          <p className="text-xs uppercase tracking-[0.2em] text-violet-300">
+            Subscribed
+          </p>
+          <p className="mt-2 text-lg text-neutral-200">
+            You&apos;re on the{" "}
+            <span className="font-medium">
+              {activeSub.plan === "yearly" ? "yearly" : "monthly"}
+            </span>{" "}
+            plan — every post from {byline} is unlocked for you.
+          </p>
+          <p className="mt-1 text-sm text-neutral-400">
+            Active until{" "}
+            <span className="text-neutral-200">
+              {activeSub.expiresAt.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+          </p>
+          <a
+            href={`https://solscan.io/tx/${activeSub.txSignature}?cluster=devnet`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-block text-xs font-mono text-violet-400 hover:text-violet-300"
+          >
+            {activeSub.txSignature.slice(0, 10)}…
+            {activeSub.txSignature.slice(-6)} ↗
+          </a>
+        </section>
+      ) : offersSubscription ? (
         <section className="mt-10 rounded-xl border border-violet-700/30 bg-gradient-to-br from-violet-950/30 via-neutral-900/40 to-neutral-900/40 p-6">
           <p className="text-xs uppercase tracking-[0.2em] text-violet-300">
             Subscribe
@@ -111,13 +166,6 @@ export default async function CreatorProfilePage({ params }: Props) {
                 creatorAddress={creator.solanaAddress!}
                 plan="monthly"
                 priceUsdc={tier!.monthlyPrice!}
-                initialExpiresAt={
-                  alreadySubscribed
-                    ? // we don't know the exact expiry without a DB call;
-                      // showing "active" via the subscribed state is enough
-                      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                    : undefined
-                }
               />
             )}
             {hasYearly && (
@@ -126,13 +174,6 @@ export default async function CreatorProfilePage({ params }: Props) {
                 creatorAddress={creator.solanaAddress!}
                 plan="yearly"
                 priceUsdc={tier!.yearlyPrice!}
-                initialExpiresAt={
-                  alreadySubscribed
-                    ? new Date(
-                        Date.now() + 365 * 24 * 60 * 60 * 1000
-                      ).toISOString()
-                    : undefined
-                }
               />
             )}
           </div>

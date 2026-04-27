@@ -168,19 +168,23 @@ export function CreatorTierEditor({ creatorId, solanaAddress }: Props) {
         subscriptions entirely.
       </p>
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex items-center gap-3 flex-wrap">
         <button
           onClick={handleSave}
           disabled={saving || !loaded}
           className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium"
         >
-          {saving ? "Saving…" : "Save subscription tier"}
+          {saving
+            ? "Saving…"
+            : active
+              ? "Update subscription"
+              : "Save subscription tier"}
         </button>
         {active && (
           <button
             onClick={handleDisable}
             disabled={saving}
-            className="text-xs text-neutral-500 hover:text-neutral-300"
+            className="px-3 py-2 rounded-lg border border-neutral-800 hover:border-neutral-700 text-xs text-neutral-400 hover:text-neutral-200"
           >
             Pause subscriptions
           </button>
@@ -222,7 +226,7 @@ function PriceField({
           inputMode="decimal"
           placeholder="0.00"
           disabled={disabled}
-          className="w-full rounded-lg bg-neutral-950/40 border border-neutral-800 px-3 pl-7 pr-16 py-2 text-neutral-100 outline-none focus:border-violet-500 disabled:opacity-50"
+          className="w-full rounded-lg bg-neutral-950/40 border border-neutral-800 pl-7 pr-16 py-2 text-neutral-100 outline-none focus:border-violet-500 disabled:opacity-50"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">
           {unit}

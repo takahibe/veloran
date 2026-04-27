@@ -134,7 +134,17 @@ export default async function PaywallPage({ params }: Props) {
       </h1>
 
       <p className="mt-3 text-sm text-neutral-500">
-        by <span className="text-neutral-300">{byline}</span>
+        by{" "}
+        {post.creator.solanaAddress ? (
+          <Link
+            href={`/c/${post.creator.solanaAddress}`}
+            className="text-neutral-300 hover:text-violet-300 underline-offset-2 hover:underline"
+          >
+            {byline}
+          </Link>
+        ) : (
+          <span className="text-neutral-300">{byline}</span>
+        )}
         {" · "}
         <time dateTime={post.createdAt.toISOString()}>
           {post.createdAt.toLocaleDateString("en-US", {
@@ -172,6 +182,23 @@ export default async function PaywallPage({ params }: Props) {
         initialContent={initialContent}
         tier={tier}
       />
+
+      {post.creator.solanaAddress && (
+        <div className="mt-12 flex items-center justify-between gap-4 border-t border-neutral-800 pt-6">
+          <Link
+            href={`/c/${post.creator.solanaAddress}`}
+            className="text-sm text-neutral-400 hover:text-violet-300"
+          >
+            ← More from {byline}
+          </Link>
+          <Link
+            href="/dashboard"
+            className="text-sm text-neutral-500 hover:text-neutral-300"
+          >
+            Your dashboard →
+          </Link>
+        </div>
+      )}
 
       <p className="mt-8 text-center text-xs text-neutral-600">
         Payments settle on Solana devnet · 95% to creator, 5% to Veloran ·
