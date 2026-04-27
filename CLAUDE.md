@@ -89,20 +89,47 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
-## Session resume notes (last updated 2026-04-27, mid-deploy to Vercel)
+## Session resume notes (last updated 2026-04-27 afternoon, ALL 8 BEATS VERIFIED LIVE)
 
-**Where we stopped:** Neon Postgres is attached to Vercel and the schema is pushed. We were one click away from triggering the first real deploy + smoke testing the live URL.
+**Where we are:** The product is shippable. Live URL works end-to-end against a real Postgres database, with both the human-payment beat AND the autonomous-AI-agent beat verified on prod. Remaining work is pure publishing: pitch deck → demo video → submit. ~12 days ahead of plan.
 
-**Resume here next session — pick up at the redeploy step:**
-1. Open Vercel → project `veloran-paywall` → Deployments tab
-2. Trigger a redeploy (three-dot menu on the latest deployment → Redeploy) — needed so the build picks up the Neon-injected `DATABASE_URL`
-3. When deploy is "Ready", grab the live URL (e.g. `veloran-paywall.vercel.app`)
-4. Smoke-test on the live URL:
-   - Privy login (creates first Creator row in Neon)
-   - Create a paywall post (slug auto-generated)
-   - Open the slug in incognito → unlock with USDC → content reveals
-   - Dashboard shows earnings
-5. If all 4 pass → start pitch deck (10 slides) + record 2-min demo video → submit
+**Live URL:** https://veloran-paywall-sage.vercel.app/
+
+**Resume next session — three options to choose from:**
+- **A.** Draft the pitch deck (10 slides as Markdown outline → user puts into Google Slides or Pitch.com). ~90 min
+- **B.** Write the 2-minute demo video voiceover script (beat by beat, ready to record in Loom). ~30 min
+- **C.** Internal dress rehearsal — full demo end-to-end on the live URL with timer running, then iterate
+
+**Smoke test verified live (all 8 beats):**
+- Beat 1 (creator login): Privy email login → embedded Solana devnet wallet auto-created, dashboard renders ✅
+- Beat 2 (create paywall): `/post/new` form with Claude preview generator, post slug auto-generated ✅
+- Beat 3 (reader sees preview): incognito window, blurred content, violet Unlock button ✅
+- Beat 4 (reader unlocks): Privy modal → `useSignAndSendTransaction` → on-chain SPL transfer routed through Anchor program → cookie set → content revealed + Solscan link ✅
+- Beat 5 (AI agent unlocks): `npm run ai-reader -- <slug>` against live URL — 402 challenge → autonomous on-chain payment via pay_for_content → re-fetch with X-PAYMENT header → content printed ✅. Tested signature: `56upSAXhSWdpKpMA...`
+- Beat 6 (earnings dashboard): EarningsPanel shows lifetime $0.95, 2 unlocks, "1 human"/"1 agent" pills, both Solscan links ✅
+- Beat 7 (Solscan proof): every unlock tx visible on devnet — both human + agent ✅
+- Beat 8 (closer): pure pitch, no code
+
+**Live demo artifacts:**
+- Live URL: `https://veloran-paywall-sage.vercel.app/`
+- Live test post slug: `why-i-m-long-sol-into-fomc-ev8p0` ($0.50)
+- Creator account on prod: dr.adityasaputra@gmail.com
+- Reader account on prod: same Privy app + same email = same embedded wallet as local (`9Y59...Tm2TZ`, ~5 USDC remaining)
+- Agent keypair: `~/.config/solana/agent.json`, address `3P6V...VmYB`, ~1 USDC remaining
+- Anchor program (devnet): `2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS`
+- Treasury: `DgGYE7boZTEwrotFsYS9bFYsrgpz8TC76cXCZ8GcFKnP`
+
+**To re-run the AI reader on prod (Beat 5) for any slug:**
+```bash
+cd ~/veloran
+VELORAN_BASE_URL=https://veloran-paywall-sage.vercel.app \
+  AGENT_KEYPAIR_PATH=~/.config/solana/agent.json \
+  npm run ai-reader -- <slug>
+```
+
+**Bugs fixed during the prod smoke test (all in commits already on GitHub):**
+- `960cbfa` — Dashboard 401 race on first login with empty DB (fix: gate posts/earnings fetch on `me` being loaded). Hit when prod DB is empty; local never saw it because Creator row already existed.
+- `c267578` — `$` overlapping price digits on `/post/new` (pl-6 → pl-7).
 
 **What landed today (Apr 27):**
 - ✅ GitHub repo: `https://github.com/takahibe/veloran` (public)
