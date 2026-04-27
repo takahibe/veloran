@@ -118,10 +118,14 @@ export function DashboardClient() {
     }
   }, [authenticated, getAccessToken]);
 
+  // Wait for /api/me to upsert the Creator row before fetching posts/earnings.
+  // On a fresh DB the Creator doesn't exist until /api/me POST returns, and
+  // hitting /api/posts before then 401s.
   useEffect(() => {
+    if (!me) return;
     loadPosts();
     loadEarnings();
-  }, [loadPosts, loadEarnings]);
+  }, [me, loadPosts, loadEarnings]);
 
   if (!ready || !authenticated) {
     return (
