@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { microUsdcToUsd } from "@/lib/slug";
 import { SubscribeButton } from "@/components/SubscribeButton";
+import { AuthRefresh } from "@/components/AuthRefresh";
 import { verifyPrivyCookie } from "@/lib/privy-server";
 import type { Metadata } from "next";
 
@@ -59,9 +60,10 @@ export default async function CreatorProfilePage({ params }: Props) {
   const byline =
     creator.displayName ?? creator.email?.split("@")[0] ?? "anon";
 
-  // Server-side: if the visitor is logged in, look up their actual active
-  // subscription so we can show the *real* plan + expiry (not just "yes
-  // there's a cookie"). The cookie alone doesn't carry plan info.
+  // Server-side: identify the visitor (if logged in) so we can:
+  //   - Hide the Subscribe card when the visitor IS the creator
+  //   - Look up their actual active subscription (plan + exact expiry)
+  let isOwner = false;
   let activeSub: {
     plan: string;
     expiresAt: Date;
@@ -77,16 +79,19 @@ export default async function CreatorProfilePage({ params }: Props) {
       select: { id: true },
     });
     if (me) {
-      const sub = await prisma.subscription.findFirst({
-        where: {
-          creatorId: creator.id,
-          subscriberCreatorId: me.id,
-          expiresAt: { gt: new Date() },
-        },
-        orderBy: { expiresAt: "desc" },
-        select: { plan: true, expiresAt: true, txSignature: true },
-      });
-      activeSub = sub;
+      isOwner = me.id === creator.id;
+      if (!isOwner) {
+        const sub = await prisma.subscription.findFirst({
+          where: {
+            creatorId: creator.id,
+            subscriberCreatorId: me.id,
+            expiresAt: { gt: new Date() },
+          },
+          orderBy: { expiresAt: "desc" },
+          select: { plan: true, expiresAt: true, txSignature: true },
+        });
+        activeSub = sub;
+      }
     }
   }
 
@@ -96,8 +101,15 @@ export default async function CreatorProfilePage({ params }: Props) {
   const hasYearly = !!(tier && tier.yearlyPrice && tier.yearlyPrice > 0);
   const offersSubscription = hasMonthly || hasYearly;
 
+  // If the active sub is monthly AND a yearly tier exists, offer an upgrade.
+  const showUpgradeToYearly =
+    !!activeSub && activeSub.plan === "monthly" && hasYearly;
+
   return (
     <main className="flex-1 px-6 py-16 max-w-3xl mx-auto w-full">
+      {/* Re-renders this server page when Privy auth flips on the client */}
+      <AuthRefresh />
+
       <Link
         href="/"
         className="text-xs uppercase tracking-[0.2em] text-violet-400"
@@ -114,8 +126,57 @@ export default async function CreatorProfilePage({ params }: Props) {
         </p>
       </header>
 
+      {/* Creator self-view banner */}
+      {isOwner && (
+        <div className="mt-6 flex items-center justify-between gap-3 rounded-lg border border-violet-700/40 bg-violet-950/20 px-4 py-2.5">
+          <p className="text-xs text-violet-300">
+            Viewing as creator — this is your public profile.
+          </p>
+          <Link
+            href="/dashboard"
+            className="text-xs text-violet-300 hover:text-violet-200 underline underline-offset-2"
+          >
+            ← Dashboard
+          </Link>
+        </div>
+      )}
+
       {/* Subscription card */}
-      {activeSub ? (
+      {isOwner ? (
+        // Show creator a preview of what readers see, but no payment buttons
+        offersSubscription ? (
+          <section className="mt-10 rounded-xl border border-neutral-800 bg-neutral-900/40 p-6">
+            <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+              Your subscription tier (preview)
+            </p>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {hasMonthly && (
+                <div className="rounded-lg border border-neutral-800 px-4 py-3 text-sm text-neutral-400">
+                  Monthly · ${microUsdcToUsd(tier!.monthlyPrice!)}/month
+                </div>
+              )}
+              {hasYearly && (
+                <div className="rounded-lg border border-neutral-800 px-4 py-3 text-sm text-neutral-400">
+                  Yearly · ${microUsdcToUsd(tier!.yearlyPrice!)}/year
+                </div>
+              )}
+            </div>
+            <Link
+              href="/dashboard"
+              className="mt-4 inline-block text-xs text-violet-300 hover:text-violet-200"
+            >
+              Edit tier on dashboard ↗
+            </Link>
+          </section>
+        ) : (
+          <section className="mt-10 rounded-xl border border-neutral-800 bg-neutral-900/40 p-5 text-sm text-neutral-500">
+            You haven&apos;t opened subscriptions yet.{" "}
+            <Link href="/dashboard" className="text-violet-300 hover:text-violet-200">
+              Set monthly / yearly prices on the dashboard.
+            </Link>
+          </section>
+        )
+      ) : activeSub ? (
         <section className="mt-10 rounded-xl border border-violet-700/40 bg-violet-950/20 p-6">
           <p className="text-xs uppercase tracking-[0.2em] text-violet-300">
             Subscribed
@@ -146,6 +207,26 @@ export default async function CreatorProfilePage({ params }: Props) {
             {activeSub.txSignature.slice(0, 10)}…
             {activeSub.txSignature.slice(-6)} ↗
           </a>
+
+          {showUpgradeToYearly && (
+            <div className="mt-5 border-t border-violet-700/30 pt-5">
+              <p className="text-xs uppercase tracking-wider text-violet-300">
+                Upgrade to yearly
+              </p>
+              <p className="mt-1 text-sm text-neutral-400">
+                Lock in 12 months at ${microUsdcToUsd(tier!.yearlyPrice!)}.
+                Your access is extended to a year from today.
+              </p>
+              <div className="mt-3 max-w-xs">
+                <SubscribeButton
+                  creatorId={creator.id}
+                  creatorAddress={creator.solanaAddress!}
+                  plan="yearly"
+                  priceUsdc={tier!.yearlyPrice!}
+                />
+              </div>
+            </div>
+          )}
         </section>
       ) : offersSubscription ? (
         <section className="mt-10 rounded-xl border border-violet-700/30 bg-gradient-to-br from-violet-950/30 via-neutral-900/40 to-neutral-900/40 p-6">
@@ -220,7 +301,23 @@ export default async function CreatorProfilePage({ params }: Props) {
         )}
       </section>
 
-      <p className="mt-12 text-center text-xs text-neutral-600">
+      {/* Footer nav */}
+      <div className="mt-12 flex items-center justify-between gap-4 border-t border-neutral-800 pt-6">
+        <Link
+          href="/"
+          className="text-sm text-neutral-400 hover:text-violet-300"
+        >
+          ← Veloran home
+        </Link>
+        <Link
+          href="/dashboard"
+          className="text-sm text-neutral-500 hover:text-neutral-300"
+        >
+          Your dashboard →
+        </Link>
+      </div>
+
+      <p className="mt-8 text-center text-xs text-neutral-600">
         Payments settle on Solana devnet · 95% to creator, 5% to Veloran ·
         on-chain
       </p>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { microUsdcToUsd } from "@/lib/slug";
 import { PaywallGate } from "@/components/PaywallGate";
+import { AuthRefresh } from "@/components/AuthRefresh";
 import {
   unlockCookieName,
   verifyUnlockToken,
@@ -122,6 +123,9 @@ export default async function PaywallPage({ params }: Props) {
 
   return (
     <main className="flex-1 px-6 py-16 max-w-2xl mx-auto w-full">
+      {/* Re-renders this server page when Privy auth flips on the client */}
+      <AuthRefresh />
+
       <Link
         href="/"
         className="text-xs uppercase tracking-[0.2em] text-violet-400"
