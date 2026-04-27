@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { microUsdcToUsd } from "@/lib/slug";
 import { SubscribeButton } from "@/components/SubscribeButton";
+import { SubscribeOptions } from "@/components/SubscribeOptions";
 import { AuthRefresh } from "@/components/AuthRefresh";
 import { verifyPrivyCookie } from "@/lib/privy-server";
 import type { Metadata } from "next";
@@ -240,23 +241,13 @@ export default async function CreatorProfilePage({ params }: Props) {
             On-chain split unchanged: 95% to creator, 5% platform.
           </p>
 
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {hasMonthly && (
-              <SubscribeButton
-                creatorId={creator.id}
-                creatorAddress={creator.solanaAddress!}
-                plan="monthly"
-                priceUsdc={tier!.monthlyPrice!}
-              />
-            )}
-            {hasYearly && (
-              <SubscribeButton
-                creatorId={creator.id}
-                creatorAddress={creator.solanaAddress!}
-                plan="yearly"
-                priceUsdc={tier!.yearlyPrice!}
-              />
-            )}
+          <div className="mt-5">
+            <SubscribeOptions
+              creatorId={creator.id}
+              creatorAddress={creator.solanaAddress!}
+              monthly={hasMonthly ? { priceUsdc: tier!.monthlyPrice! } : null}
+              yearly={hasYearly ? { priceUsdc: tier!.yearlyPrice! } : null}
+            />
           </div>
         </section>
       ) : (
