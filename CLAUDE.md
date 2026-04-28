@@ -89,6 +89,67 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
+## Session resume notes (last updated 2026-04-29, subscriptions shipped + wallet verified + deck/script written)
+
+**Where we are:** Build phase fully complete. Subscriptions live. Wallet sign-in verified end-to-end. Pitch deck content + demo video script committed. Remaining work is **execution-only**: visual design of the deck, recording the video, submitting. ~11 days of buffer remain.
+
+**Live URL:** https://veloran-paywall-sage.vercel.app/ — covers per-post + subscription + email-login + wallet-login (Phantom).
+
+**Resume next session — the only paths from here:**
+- **A.** Demo video recording — user follows `docs/demo-script.md` (2:30, 9 beats + wallet cutaway), records in Loom. Budget half a day. Claude can review takes, suggest re-cuts, write subtitle text if needed, but cannot record.
+- **B.** Deck visual design — user is doing this themselves in Claude artifacts (or wherever) using `docs/pitch-deck.md` as the content source. Claude can review final deck draft, tighten copy, suggest visual refinements.
+- **C.** Submission packaging — once deck PDF + Loom URL + description are ready, submit to the Solana Frontier portal. Description copy can lean on pitch-deck.md slides 1, 3, 5, 6.
+- **D.** Late polish — only if a real bug surfaces during dress rehearsal. Keep urge-to-tweak under control: every change is a re-test.
+
+**What landed since the Apr 27 session save:**
+
+Subscription feature build (3 days, 4 commits):
+- ✅ `a08f77d` — Day 1: Schema (SubscriptionTier + Subscription) + verifyOnChainPayment refactored from post-shaped to recipient-shaped + content-gate sub tokens. Schema pushed to Neon (non-destructive).
+- ✅ `610c99c` — Day 2: API routes (`/api/subscriptions/[creatorId]`, `/api/subscription-tiers`) + `/api/earnings` extended (backward-compat) + `/c/[address]` public profile page + `SubscribeButton` component.
+- ✅ `fbf0242` — Day 3: `CreatorTierEditor` on dashboard + `/p/[slug]` checks subscription cookie + PaywallGate "Subscribe" upsell link + EarningsPanel breaks out per-post vs sub revenue + recent subscriptions list.
+- ✅ `f01aeb6` — Polish round 1: DB-backed sub state (replaces unreliable cookie check), navigation footers on /p/[slug], "Update subscription" label, `$` overlap fix.
+- ✅ `aa8f348` — Polish round 2: creator self-view banner on /c/[address], upgrade-to-yearly path for monthly subs, `AuthRefresh` component (server re-render after Privy login), "Your dashboard →" footer on /c.
+- ✅ `155c1e5` — Polish round 3: `SubscribeOptions` wrapper collapses two "Sign in to subscribe" buttons into one when logged out.
+
+Wallet sign-in verification (Apr 28-29):
+- ✅ Spec at `docs/specs/2026-04-28-wallet-signin-verification.md` (commit `0416278`)
+- ✅ Plan in `~/.claude/plans/c-users-user-claude-code-veloran-capita-eager-jellyfish.md` ("Wallet sign-in verification execution plan" section)
+- ✅ All 5 flows verified PASS on prod (sign-in, /api/me upsert, unlock, subscribe+gate, creator+tier). Phantom on devnet, fresh incognito, fully end-to-end.
+- ✅ Outcome: **demo-ready**. 5-second wallet cutaway between video beats 4 and 5.
+- ✅ `c8e78a0` — Wallet-verification follow-ups: SubscribeButton calls router.refresh() after success (prevents accidental double-subscribe), byline fallback shows short address for wallet users (was "anon"), `$` padding pl-7 → pl-8 on tier editor.
+
+Documentation (Apr 29):
+- ✅ `79c0876` — Pitch deck content outline: `docs/pitch-deck.md`. 10 slides with headlines, body, visual notes, speaker notes. Tone guidance + words to avoid + words to use.
+- ✅ `7904eb8` — Demo video script: `docs/demo-script.md`. 2:30 voiceover with [time] marks, screen actions per beat, 4-window pre-flight checklist, production tips, submission package.
+
+**Live demo artifacts (no change since Apr 27):**
+- Live URL: https://veloran-paywall-sage.vercel.app/
+- Test post slug: `why-i-m-long-sol-into-fomc-ev8p0` ($0.50)
+- Anchor program (devnet): `2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS`
+- Treasury: `DgGYE7boZTEwrotFsYS9bFYsrgpz8TC76cXCZ8GcFKnP`
+- Agent keypair: `~/.config/solana/agent.json`, address `3P6V…VmYB`
+- Test subscription tier: monthly $1, yearly $10
+
+**Known small follow-ups noted but NOT blocking the demo:**
+- `/dev/send-usdc` shows generic "failed" message when wallet has insufficient USDC. Better message would say "not enough USDC". Won't appear in the demo video (we use faucets for funding).
+- Edit-post / edit-pricing UX is on the future-features shelf. Defer until after submission.
+- Sharing buttons / comments / likes on posts — same shelf.
+
+**To re-run the AI reader on prod (still works, regression-free):**
+```bash
+cd ~/veloran
+VELORAN_BASE_URL=https://veloran-paywall-sage.vercel.app \
+  AGENT_KEYPAIR_PATH=~/.config/solana/agent.json \
+  npm run ai-reader -- <slug>
+```
+
+**Schema re-push to Neon (only if schema drifts again):**
+```bash
+DATABASE_URL='<pooled-neon-url-from-Vercel-Storage-tab>' npx prisma db push
+```
+
+---
+
 ## Session resume notes (last updated 2026-04-27 afternoon, ALL 8 BEATS VERIFIED LIVE)
 
 **Where we are:** The product is shippable. Live URL works end-to-end against a real Postgres database, with both the human-payment beat AND the autonomous-AI-agent beat verified on prod. Remaining work is pure publishing: pitch deck → demo video → submit. ~12 days ahead of plan.
