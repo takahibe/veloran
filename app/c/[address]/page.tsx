@@ -11,6 +11,19 @@ import type { Metadata } from "next";
 
 type Props = { params: Promise<{ address: string }> };
 
+function deriveByline(creator: {
+  displayName: string | null;
+  email: string | null;
+  solanaAddress: string | null;
+}): string {
+  if (creator.displayName) return creator.displayName;
+  if (creator.email) return creator.email.split("@")[0];
+  if (creator.solanaAddress) {
+    return `${creator.solanaAddress.slice(0, 4)}…${creator.solanaAddress.slice(-4)}`;
+  }
+  return "anon";
+}
+
 async function getCreatorByAddress(address: string) {
   return prisma.creator.findUnique({
     where: { solanaAddress: address },
@@ -45,8 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { address } = await params;
   const creator = await getCreatorByAddress(address);
   if (!creator) return { title: "Not found · Veloran" };
-  const byline =
-    creator.displayName ?? creator.email?.split("@")[0] ?? "anon";
+  const byline = deriveByline(creator);
   return {
     title: `${byline} · Veloran`,
     description: `Paywalled posts by ${byline}. Subscribe or pay-per-post in USDC on Solana.`,
@@ -58,8 +70,7 @@ export default async function CreatorProfilePage({ params }: Props) {
   const creator = await getCreatorByAddress(address);
   if (!creator) notFound();
 
-  const byline =
-    creator.displayName ?? creator.email?.split("@")[0] ?? "anon";
+  const byline = deriveByline(creator);
 
   // Server-side: identify the visitor (if logged in) so we can:
   //   - Hide the Subscribe card when the visitor IS the creator

@@ -116,10 +116,15 @@ export default async function PaywallPage({ params }: Props) {
         }
       : null;
 
+  // Mirrors deriveByline() on /c/[address] — falls back to a short
+  // wallet address before "anon" so wallet-only Privy users don't get
+  // mis-labeled as anonymous.
   const byline =
     post.creator.displayName ??
     post.creator.email?.split("@")[0] ??
-    "anon";
+    (post.creator.solanaAddress
+      ? `${post.creator.solanaAddress.slice(0, 4)}…${post.creator.solanaAddress.slice(-4)}`
+      : "anon");
 
   return (
     <main className="flex-1 px-6 py-16 max-w-2xl mx-auto w-full">

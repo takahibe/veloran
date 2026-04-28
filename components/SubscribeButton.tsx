@@ -5,6 +5,7 @@ import {
   useWallets,
   useSignAndSendTransaction,
 } from "@privy-io/react-auth/solana";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Connection,
@@ -71,6 +72,7 @@ export function SubscribeButton({
   const { ready, authenticated, login, getAccessToken } = usePrivy();
   const { wallets } = useWallets();
   const { signAndSendTransaction } = useSignAndSendTransaction();
+  const router = useRouter();
 
   const [status, setStatus] = useState<Status>(
     initialExpiresAt ? "subscribed" : "idle"
@@ -187,6 +189,12 @@ export function SubscribeButton({
 
       setExpiresAt(body.expiresAt);
       setStatus("subscribed");
+      // Re-render the parent server component so siblings (e.g. the
+      // *other* plan's button on /c/[address]) become the unified
+      // "Subscribed" card instead of staying clickable. Without this,
+      // a user who just paid for yearly could still hit the monthly
+      // button and double-pay until manual refresh.
+      router.refresh();
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Subscribe failed");

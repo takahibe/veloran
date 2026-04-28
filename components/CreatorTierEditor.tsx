@@ -226,7 +226,7 @@ function PriceField({
           inputMode="decimal"
           placeholder="0.00"
           disabled={disabled}
-          className="w-full rounded-lg bg-neutral-950/40 border border-neutral-800 pl-7 pr-16 py-2 text-neutral-100 outline-none focus:border-violet-500 disabled:opacity-50"
+          className="w-full rounded-lg bg-neutral-950/40 border border-neutral-800 pl-8 pr-16 py-2 text-neutral-100 outline-none focus:border-violet-500 disabled:opacity-50"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">
           {unit}
