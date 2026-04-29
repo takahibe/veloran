@@ -16,18 +16,20 @@ export default function Home() {
             Veloran · Solana devnet
           </p>
           <h1 className="mt-8 text-5xl sm:text-6xl font-semibold leading-[1.05] tracking-tight">
-            Paywall any post in{" "}
+            Programmable paywalls for{" "}
             <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-              30 seconds
+              APIs, datasets, and premium content
             </span>
             .
           </h1>
           <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-2xl mx-auto">
-            Set a price in USDC. Humans and AI agents auto-pay to unlock.
+            Sellers publish a paid endpoint. Buyers — humans or AI agents —
+            unlock instantly with USDC.
             <br className="hidden sm:block" />
-            <span className="text-neutral-300">95% to you, 5% to us</span> —
-            split on-chain on Solana. No Substack lock-in. No Stripe fees. No
-            KYC.
+            <span className="text-neutral-300">
+              95% direct to you, settled on-chain
+            </span>{" "}
+            by a Solana program. No facilitator. No custody. No KYC.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
             <LoginButton />
@@ -49,18 +51,18 @@ export default function Home() {
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
           <Feature
             icon={<CoinsIcon />}
-            title="95% to creator"
-            body="On-chain split via an Anchor program. Every payment is provable on Solscan. No middleman, no holding period."
+            title="On-chain settlement"
+            body="A Solana Anchor program handles the 95/5 split atomically. Sellers get paid directly — no facilitator custody, no clearing period, no platform lock-in."
           />
           <Feature
             icon={<RobotIcon />}
-            title="AI agents pay too"
-            body="Every paywalled link doubles as an x402 endpoint. Agents auto-pay USDC to read your work — a revenue channel that didn't exist before."
+            title="Humans + AI agents"
+            body="One URL serves both. Humans sign in (email or wallet) and pay with one tap. AI agents hit the same URL, get an x402 challenge, pay autonomously, and parse the response."
           />
           <Feature
             icon={<BoltIcon />}
-            title="Embedded wallets"
-            body="Sign in with email. Privy mints a Solana wallet for you. No seed phrase, no extension, no friction for your readers."
+            title="Per-call or subscription"
+            body="Charge per request — $0.05, $0.50, $5 — or open a monthly tier so heavy buyers pay flat. Same on-chain primitive, different durations."
           />
         </div>
       </section>
@@ -72,24 +74,24 @@ export default function Home() {
             How it works
           </p>
           <h2 className="mt-3 text-3xl sm:text-4xl font-semibold text-center">
-            From draft to paid in three steps.
+            From idea to paid endpoint in three steps.
           </h2>
 
           <ol className="mt-12 space-y-6">
             <Step
               n={1}
-              title="Sign in with email"
-              body="Privy creates an embedded Solana devnet wallet for you. No browser extension, no seed phrase to copy."
+              title="Sign in with email or wallet"
+              body="Privy creates an embedded Solana wallet automatically — or connect Phantom directly. No seed phrase to copy, no extension required for buyers."
             />
             <Step
               n={2}
-              title="Write your post, set a price"
-              body="Title, preview, gated content, and a USDC price between $0.05 and $5. You get a shareable link in seconds."
+              title="Publish your endpoint, set a USDC price"
+              body="Drop in your API response, dataset payload, or analyst write-up. Pick a per-call price ($0.05–$5) or open a monthly subscription. You get a shareable link in seconds."
             />
             <Step
               n={3}
-              title="Readers unlock — humans or agents"
-              body="Humans click and pay with one tap. AI agents hit the URL, receive an x402 challenge, auto-pay, and get the content. You see every unlock on Solscan."
+              title="Humans pay one tap. Agents pay autonomously."
+              body="Visitors see a checkout. AI agents see HTTP 402 with on-chain payment instructions, sign the transaction, parse the response. Every settlement is on-chain — provable on Solscan."
             />
           </ol>
 
@@ -106,8 +108,8 @@ export default function Home() {
       <footer className="mt-auto border-t border-neutral-900/80 px-6 py-8">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-600">
           <p>
-            <span className="text-violet-400">Veloran</span> — Substack for the
-            agent economy.
+            <span className="text-violet-400">Veloran</span> — Programmable
+            paywalls on Solana.
           </p>
           <p>
             Solana devnet · Hackathon build ·{" "}
