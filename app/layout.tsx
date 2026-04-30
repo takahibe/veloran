@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veloran — Programmable paywalls for APIs, datasets, and premium content",
+  title: "Veloran — Payment and access layer for the agent economy",
   description:
-    "Sellers publish a paid endpoint. Humans and AI agents unlock instantly with USDC. 95% direct, settled on-chain by a Solana program — no facilitator.",
+    "Sell APIs, datasets, and premium content that humans and AI agents unlock with USDC on Solana. 95% direct, settled on-chain — no facilitator.",
 };
 
 export default function RootLayout({
