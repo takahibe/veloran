@@ -89,6 +89,78 @@ Eight beats, two stories (human + AI), one closer. Full script in the plan file'
 
 ---
 
+## Session resume notes (last updated 2026-04-29 evening, mainnet keypairs generated — awaiting funding)
+
+**Where we are:** All build work complete. Positioning v2 shipped (payment + access layer for the agent economy). Two new pages live (`/for-agents`, `/demo`). Pitch deck rewritten to prompt's 10-slide structure. **Mainnet hybrid plan approved + keypairs generated.** Next gate: user funds the mainnet deployer with ~1.05 SOL.
+
+**To resume next session, the very next step is:**
+
+1. Check whether funding landed:
+   ```bash
+   wsl -d Ubuntu -- bash -lc "solana balance ~/.config/solana/veloran-mainnet-deployer.json --url mainnet-beta"
+   ```
+2. If balance ≥ 1 SOL → proceed with Block 4 (apply Cargo feature flags) through Block 8 (deploy + smoke test + commit). The full step-by-step is in the plan file at `~/.claude/plans/c-users-user-claude-code-veloran-capita-eager-jellyfish.md` under section **"Apr 29+ — Mainnet program deploy (hybrid…)"**.
+3. If still unfunded → user is still acquiring SOL. Pause; do NOT spend cycles on anything else until funding is decided.
+
+**Mainnet hybrid scope (locked via grill, Apr 29):**
+- ✅ Program will deploy to mainnet alongside the existing devnet deployment
+- ❌ Demo recording stays on devnet (zero real-money risk during takes)
+- Funding: fresh deploy keypair, ~1.05 SOL ($200) from user's trading wallet
+- Treasury = same as deploy keypair (mirrors devnet setup)
+- Build via Cargo features (`mainnet` feature flag, same source compiles to either binary)
+
+**Mainnet keypairs generated (Apr 29 evening, NOT yet funded):**
+- Deployer + Treasury (mainnet): `41iGsC9mV9FfN9fuua7asQBa5oLLcM13gPCcCnhDvuJL`
+  - Keypair file: `~/.config/solana/veloran-mainnet-deployer.json` (WSL Ubuntu)
+  - User needs to send ~1.05 SOL to this address from their trading wallet
+- Mainnet Program ID (planned): `Bybn483XkZxahdTQKHqRzfvuAnvPocWti9PGUVoPxhLz`
+  - Keypair file: `~/.config/solana/veloran-mainnet-program.json` (WSL Ubuntu)
+  - Empty by design — this is the program's address, not a wallet
+- Solscan deployer: https://solscan.io/account/41iGsC9mV9FfN9fuua7asQBa5oLLcM13gPCcCnhDvuJL
+- Solscan future program: https://solscan.io/account/Bybn483XkZxahdTQKHqRzfvuAnvPocWti9PGUVoPxhLz (will populate after deploy)
+
+**Devnet deployment unchanged + still working:**
+- Devnet program: `2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS`
+- Devnet treasury: `DgGYE7boZTEwrotFsYS9bFYsrgpz8TC76cXCZ8GcFKnP`
+- Live URL: https://veloran-paywall-sage.vercel.app/ (devnet, will stay devnet)
+
+**Positioning v2 landed (Apr 29 afternoon, commit `b7873f4`):**
+- Headline: "Veloran — the payment and access layer for the agent economy."
+- Subhead: "Sell APIs, datasets, and premium content that humans and AI agents unlock with USDC on Solana."
+- New pages: `/for-agents` (developer docs with real x402 wire format) and `/demo` (judge-facing 2-min summary)
+- Landing rebuilt: hero + 3 differentiator features + how-it-works + use-cases + why-now + why-Solana + closing CTA + footer
+- `docs/pitch-deck.md` restructured to 10-slide format from the user's Positioning Prompt
+- `docs/demo-script.md` rewritten with API-flagship voiceover + suggested JSON-shaped test post
+- Zero code-logic changes (Anchor program, schema, API routes, AI reader, auth, subscriptions all unchanged)
+
+**Recent commits (latest first):**
+- `b7873f4` — Positioning v2: payment + access layer for the agent economy (4 files + 2 new pages)
+- `7790631` — Earlier positioning shift (now superseded by v2)
+- `155c1e5` — SubscribeOptions wrapper (one sign-in button when logged out)
+- `aa8f348` — Polish round 2 (creator self-view, upgrade path, AuthRefresh)
+- `f01aeb6` — Polish: DB-backed sub state, navigation, label fixes
+- `c8e78a0` — Wallet-verification follow-ups (router.refresh after subscribe, byline, $ padding)
+
+**To re-run the AI reader on prod (still works, regression-free):**
+```bash
+cd ~/veloran
+VELORAN_BASE_URL=https://veloran-paywall-sage.vercel.app \
+  AGENT_KEYPAIR_PATH=~/.config/solana/agent.json \
+  npm run ai-reader -- <slug>
+```
+
+**Schedule (~10 days remaining to May 10 deadline):**
+- Apr 30: mainnet deploy (after funding lands) — Blocks 4-8 of the mainnet plan, ~1 day
+- May 1-2: deck visual design (user, in Claude artifacts, using `docs/pitch-deck.md` as content source)
+- May 3-5: demo video recording on devnet (using `docs/demo-script.md`)
+- May 6-8: buffer
+- May 9: submit
+- May 10: deadline
+
+**Solana dev skill installed:** `~/.agents/skills/solana-dev` — symlinked to Claude Code. Will auto-load next session. Useful for future Anchor/Solana questions.
+
+---
+
 ## Session resume notes (last updated 2026-04-29, subscriptions shipped + wallet verified + deck/script written)
 
 **Where we are:** Build phase fully complete. Subscriptions live. Wallet sign-in verified end-to-end. Pitch deck content + demo video script committed. Remaining work is **execution-only**: visual design of the deck, recording the video, submitting. ~11 days of buffer remain.
