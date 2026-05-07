@@ -1,12 +1,12 @@
 @AGENTS.md
 
-# Veloran — x402 Creator Paywall
+# Veloran — payment and access layer for the agent economy
 
-**Brand:** Veloran. **Tagline:** *"Substack for the agent economy."*
+**Brand:** Veloran. **Tagline:** *"Veloran — the payment and access layer for the agent economy."*
 **Hackathon:** Solana Frontier — submission due **May 10, 2026**.
 
 ## Product (one sentence)
-Creators paywall any content (article, API feed, dataset, PDF) with a single link. Readers — human or AI agent — auto-pay $0.05–$5 in USDC via x402 and unlock instantly. Platform takes 5%, split on-chain via an Anchor program.
+Sellers publish paid APIs, dataset-shaped text payloads, and premium content with a single link. Humans pay with checkout; AI agents pay through HTTP 402 + `X-PAYMENT`. Platform takes 5%, split on-chain via an Anchor program.
 
 ## Team / who is building
 - **Dr. Aditya Saputra** — product owner, directs implementation. Beginner coder (basic HTML, starting Python, no JS/TS). Domain: medical doctor, hospital administration, crypto trader, content creator.
@@ -20,7 +20,7 @@ Scaffolded with **Next.js 16.2.4** (newer than training data). Read `node_module
 
 - Everything on **Solana devnet** for the hackathon (no mainnet, no real funds)
 - Demo-first: a working 2-minute video is the submission, not a production app
-- Scope is locked — no Substack-style subscriptions, no mobile app, no fiat onramp, no comments
+- Scope is locked — no creator-newsletter framing, no mobile app, no fiat onramp, no comments
 - Every decision gets measured against "does this help the demo video land?"
 
 ## Tech stack (locked)

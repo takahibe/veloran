@@ -174,7 +174,7 @@ export default function Home() {
             Why Solana
           </p>
           <h2 className="mt-3 text-3xl sm:text-4xl font-semibold text-center">
-            Micropayments only work where fees and latency don't.
+            Micropayments only work where fees and latency don&apos;t.
           </h2>
           <ul className="mt-10 space-y-3 text-neutral-300">
             <Bullet>

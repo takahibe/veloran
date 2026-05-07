@@ -22,7 +22,7 @@ A Next.js app where:
 **Pay.sh framing:** Pay.sh is positioned as **market validation + complementary infrastructure**, NOT as a competitor. Pay.sh focuses on established API marketplaces; Veloran focuses on independent sellers. Don't write any copy that attacks Pay.sh.
 
 **What Veloran is NOT:**
-- ❌ "Substack on Solana" (deprecated framing)
+- ❌ Deprecated creator-newsletter framing
 - ❌ "Fully official x402 compatible" (we use a custom `exact-veloran` scheme; see `docs/x402-spike.md`)
 - ❌ A subscriptions-for-creators product (subscriptions exist as a heavy-buyer flow, not the wedge)
 - ❌ A Pay.sh competitor
@@ -52,14 +52,14 @@ A Next.js app where:
   - **GATING CONSTRAINT:** Until the deployer is funded, blocks 4-8 of the mainnet runbook cannot run.
 
 ### What still needs work before May 9
-- 🟡 README still says "This is a Next.js project bootstrapped with create-next-app" — needs replacement
-- 🟡 `docs/pitch-deck.md` slide 4 needs Pay.sh validation framing
-- 🟡 `docs/pitch-deck.md` slide 8 has placeholder `$XB` — needs Postman/IBM stats
-- 🟡 `docs/pitch-deck.md` slide 10 needs locked closing one-liner
-- 🟡 `docs/demo-script.md` Beat 9 closer voiceover needs locked one-liner
-- 🟡 Pitch deck visual design (user-led in Claude artifacts using `docs/pitch-deck.md` as content source)
+- ✅ README replaced with hackathon/project content
+- ✅ `docs/pitch-deck.md` slide 4 now frames Pay.sh as validation + complementary infrastructure
+- ✅ `docs/pitch-deck.md` slide 8 placeholder replaced with Postman/IBM direction stats
+- ✅ `docs/pitch-deck.md` slide 10 uses the locked closing one-liner
+- ✅ `docs/demo-script.md` closer voiceover uses the locked one-liner
+- ✅ Initial visual HTML deck created at `docs/pitch-deck.html`; PDF export still user-led/final-design pass
 - 🟡 Demo video recording on Loom (using `docs/demo-script.md`)
-- 🟡 200-500 word submission description
+- ✅ 200-500 word submission description drafted at `docs/submission-description.md`
 - 🟡 Submission to hackathon portal (May 9)
 
 ---
@@ -225,7 +225,7 @@ Locate the existing **Slide 4 — Solution** section. Replace its body with:
 
 #### A3. Update `docs/pitch-deck.md` slide 8 — real stats
 
-Locate **Slide 8 — Market direction / opportunity**. Replace placeholder `$XB` with concrete numbers from the architect handoff prompt:
+Locate **Slide 8 — Market direction / opportunity**. Replace the old market-size placeholder with concrete numbers from the architect handoff prompt:
 
 - Postman 2025 State of the API Report: 5,700+ surveyed, 82% API-first adoption, 65% generate API revenue, 25% derive >50% from APIs (https://www.postman.com/state-of-api/)
 - IBM AI Agents Study June 2025: 2,900 execs surveyed, AI workflows growing from 3% to 25% by EOY 2025, 70% say agentic AI essential, 83% expect agents to improve efficiency by 2026 (https://newsroom.ibm.com/2025-06-10-IBM-Study-Businesses-View-AI-Agents-as-Essential,-Not-Just-Experimental)
@@ -233,7 +233,7 @@ Locate **Slide 8 — Market direction / opportunity**. Replace placeholder `$XB`
 
 Drop any bullet you can't source.
 
-**Verify:** No `$XB` or `$X+ billion` placeholders remain in `docs/pitch-deck.md`.
+**Verify:** no market-size placeholders remain in `docs/pitch-deck.md`.
 
 #### A4. Lock the closing one-liner in slide 10 + demo Beat 9
 
@@ -494,8 +494,8 @@ End-to-end on the live URL — every item must pass.
 - [ ] Mainnet smoke-test tx visible on Solscan
 - [ ] `git status` clean; `main` branch pushed to GitHub
 - [ ] `npx tsc --noEmit` clean (no TypeScript errors)
-- [ ] No "Substack" wording anywhere in `app/`, `docs/`, or `README.md`
-- [ ] No "fully official x402 compatible" claims anywhere
+- [ ] No deprecated creator-newsletter positioning in `app/`, `docs/`, or `README.md`
+- [ ] No claims of official x402 compatibility anywhere
 
 ---
 
@@ -527,7 +527,7 @@ The submission ships if and only if **all** of these are true:
 5. **Pitch deck PDF** is ≤10 slides, mentions both program IDs on slide 9, closes with the locked one-liner on slide 10.
 6. **GitHub repo** is public, README is the new content (not create-next-app boilerplate).
 7. **Submission portal** has all 6 fields filled (video, live URL, GitHub, deck, description, submitter info).
-8. **Positioning** uses the locked one-liner consistently. Pay.sh framed as validation. No "Substack" or "fully official x402" language.
+8. **Positioning** uses the locked one-liner consistently. Pay.sh framed as validation. No deprecated creator-newsletter framing or official-x402-compatibility claims.
 
 If any of these fail by May 9 EOD: drop the failing element if non-critical. Use May 10 only as last-resort recovery for portal-submission issues — do NOT re-record the demo on May 10.
 
@@ -546,3 +546,8 @@ If any of these fail by May 9 EOD: drop the failing element if non-critical. Use
 ---
 
 *This handoff is current as of commit `7c87d1d`. Update it on each significant state change.*
+
+### 2026-05-08 Merlin session
+- Cloned repo on VPS at `/root/veloran` and inspected current state.
+- Smallest viable submission chosen: polish repo/deck/script/description first; mainnet deploy remains gated on funding.
+- Replaced README boilerplate, patched pitch deck slides 4/8/10, patched demo closer, drafted submission description, and created `docs/pitch-deck.html`.

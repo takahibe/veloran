@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Veloran — Solana Frontier Hackathon Deck</title>
+  <style>
+    :root {
+      --bg: #07070a;
+      --surface: #101018;
+      --surface-2: #161622;
+      --ink: #f4f1ff;
+      --muted: #a6a1b8;
+      --faint: #686175;
+      --violet: #8b5cf6;
+      --fuchsia: #d946ef;
+      --green: #7dd3a8;
+      --border: rgba(255,255,255,.10);
+      --size: min(100vw, calc(100vh * 16 / 9));
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #020203; color: var(--ink); }
+    body { display: grid; place-items: center; overflow: hidden; }
+    .deck { width: var(--size); height: calc(var(--size) * 9 / 16); position: relative; background: var(--bg); overflow: hidden; }
+    .slide {
+      position: absolute; inset: 0; display: none; padding: 72px 88px;
+      background:
+        radial-gradient(circle at 82% 14%, rgba(139,92,246,.28), transparent 28%),
+        radial-gradient(circle at 10% 84%, rgba(217,70,239,.14), transparent 32%),
+        linear-gradient(135deg, #08080d 0%, #0d0d16 45%, #050507 100%);
+    }
+    .slide.active { display: grid; grid-template-rows: auto 1fr auto; }
+    .kicker { color: var(--violet); text-transform: uppercase; letter-spacing: .28em; font-size: 18px; font-weight: 700; }
+    h1, h2 { margin: 0; letter-spacing: -.045em; line-height: .96; text-wrap: balance; }
+    h1 { font-size: 92px; max-width: 1260px; }
+    h2 { font-size: 74px; max-width: 1260px; }
+    .gradient { background: linear-gradient(90deg, #c4b5fd, #f0abfc); -webkit-background-clip: text; color: transparent; }
+    .headline { margin-top: 28px; font-size: 42px; line-height: 1.14; color: #eee9ff; max-width: 1180px; text-wrap: balance; }
+    .content { align-self: center; }
+    ul { list-style: none; padding: 0; margin: 44px 0 0; display: grid; gap: 20px; max-width: 1160px; }
+    li { font-size: 31px; line-height: 1.23; color: #d9d3e8; padding-left: 34px; position: relative; text-wrap: pretty; }
+    li::before { content: ""; width: 10px; height: 10px; border-radius: 99px; background: var(--violet); position: absolute; left: 0; top: .55em; box-shadow: 0 0 22px rgba(139,92,246,.85); }
+    strong { color: #fff; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #c4b5fd; font-size: .82em; }
+    .footer { display: flex; justify-content: space-between; align-items: end; color: var(--faint); font-size: 18px; letter-spacing: .02em; }
+    .pillrow { display: flex; gap: 14px; margin-top: 38px; flex-wrap: wrap; }
+    .pill { border: 1px solid var(--border); border-radius: 999px; padding: 12px 18px; color: #ddd7ee; background: rgba(255,255,255,.04); font-size: 22px; }
+    .cardgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin-top: 46px; }
+    .card { border: 1px solid var(--border); border-radius: 28px; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); padding: 28px; min-height: 210px; }
+    .card .label { color: var(--violet); letter-spacing: .18em; text-transform: uppercase; font-size: 15px; font-weight: 800; }
+    .card .big { margin-top: 28px; font-size: 48px; line-height: 1; font-weight: 800; }
+    .card p { color: var(--muted); font-size: 24px; line-height: 1.25; margin: 16px 0 0; }
+    .flow { margin-top: 56px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 28px; align-items: center; }
+    .flowbox { border: 1px solid var(--border); border-radius: 34px; padding: 34px; background: rgba(139,92,246,.08); min-height: 280px; }
+    .flowbox h3 { margin: 0; font-size: 38px; }
+    .flowbox p { margin: 18px 0 0; font-size: 27px; color: var(--muted); line-height: 1.26; }
+    .arrow { color: var(--violet); font-size: 60px; }
+    .quote { margin-top: 52px; font-size: 54px; line-height: 1.05; max-width: 1250px; text-wrap: balance; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .controls { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; background: rgba(0,0,0,.58); border: 1px solid rgba(255,255,255,.13); color: white; border-radius: 999px; padding: 8px 12px; font-size: 13px; backdrop-filter: blur(10px); }
+    button { border: 0; background: rgba(255,255,255,.09); color: white; border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+    button:hover, button:focus-visible { background: rgba(139,92,246,.6); outline: 2px solid #c4b5fd; }
+    @media print {
+      body { display: block; overflow: visible; background: white; }
+      .deck { width: 100vw; height: auto; overflow: visible; }
+      .slide { position: relative; display: grid !important; width: 100vw; height: 56.25vw; page-break-after: always; }
+      .slide:not(.active) { display: grid !important; }
+      .controls { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-live="polite">
+    <section class="slide active" data-title="Title">
+      <header><div class="kicker">Veloran · Solana Frontier · May 2026</div></header>
+      <div class="content">
+        <h1>Veloran — the payment and access layer for the <span class="gradient">agent economy</span>.</h1>
+        <ul>
+          <li>Sell APIs, datasets, and premium content</li>
+          <li>Humans and AI agents both unlock with USDC on Solana</li>
+          <li>95% direct to the seller, settled on-chain — no facilitator, no custody</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>veloran-paywall-sage.vercel.app</span><span>github.com/takahibe/veloran</span></footer>
+    </section>
+
+    <section class="slide" data-title="Problem">
+      <header><div class="kicker">Problem</div></header>
+      <div class="content">
+        <h2>Premium digital resources are still sold like it’s 2015.</h2>
+        <ul>
+          <li>Many existing rails are built for accounts, subscriptions, or contracts — not one-off machine purchases</li>
+          <li>Subscriptions force buyers into recurring relationships they do not want</li>
+          <li>AI agents increasingly read content and call APIs — but most resources still have no agent-native payment path</li>
+          <li>Crypto-native attempts often route through hosted facilitators instead of direct settlement</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>Seller pain + buyer friction + agent demand</span><span>02 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Why now">
+      <header><div class="kicker">Why now</div></header>
+      <div class="content">
+        <h2>Three trends just converged.</h2>
+        <div class="cardgrid">
+          <div class="card"><div class="label">Agents</div><div class="big">Real buyers</div><p>Major AI labs shipped increasingly agentic products in 2025.</p></div>
+          <div class="card"><div class="label">HTTP 402</div><div class="big">Payment wire</div><p>x402-style payment flows give agents a machine-readable price path.</p></div>
+          <div class="card"><div class="label">Solana</div><div class="big">Cheap USDC</div><p>Low fees make per-call settlement practical for small paid requests.</p></div>
+        </div>
+      </div>
+      <footer class="footer"><span>The infrastructure question is live now</span><span>03 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Solution + validation">
+      <header><div class="kicker">Solution + market validation</div></header>
+      <div class="content">
+        <h2>Pay.sh proved the demand. Veloran fills the seller-side gap.</h2>
+        <ul>
+          <li>Pay.sh validates agent-paid commerce on Solana for established APIs</li>
+          <li>Cloudflare Pay-Per-Crawl proves content owners want to charge machine traffic</li>
+          <li>One resource URL supports two buyers: humans checkout with Privy; agents receive HTTP 402 payment instructions</li>
+          <li>Veloran adds publishing, paywalling, access, and on-chain settlement for independent sellers</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>Validation, not competition</span><span>04 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Product">
+      <header><div class="kicker">Product</div></header>
+      <div class="content">
+        <h2>Three steps from idea to paid endpoint.</h2>
+        <div class="flow">
+          <div class="flowbox"><h3>1. Sign in</h3><p>Email login mints an embedded Privy wallet, or connect Phantom directly.</p></div>
+          <div class="arrow">→</div>
+          <div class="flowbox"><h3>2. Publish</h3><p>Drop a JSON response, text payload, or analyst writing. Pick a USDC price.</p></div>
+        </div>
+        <div class="pillrow"><span class="pill">Humans pay checkout</span><span class="pill">Agents send X-PAYMENT</span><span class="pill">Settlement in one Anchor instruction</span></div>
+      </div>
+      <footer class="footer"><span>The form is the product</span><span>05 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Why Solana">
+      <header><div class="kicker">Why Solana</div></header>
+      <div class="content">
+        <h2>Micropayments only work where fees and latency do not.</h2>
+        <ul>
+          <li>Sub-cent fees → $0.05 per-call pricing stays economical</li>
+          <li>Fast, low-cost settlement → agent gets its response in the same request cycle</li>
+          <li>Custom programs → atomic 95/5 split without routing every payment through a hosted facilitator</li>
+          <li>USDC on Solana gives both sides a familiar stablecoin settlement asset</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>Cheap settlement + programmable payment logic</span><span>06 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Use cases">
+      <header><div class="kicker">Use cases</div></header>
+      <div class="content">
+        <h2>What sellers can publish today.</h2>
+        <ul>
+          <li><strong>Paid API endpoints</strong> — trade signals, on-chain analytics, model inference</li>
+          <li><strong>Text-shaped datasets</strong> — JSON/CSV-style payloads priced once, downloaded once; native files are roadmap</li>
+          <li><strong>Premium analyst content</strong> — long-form research, gated reports, structured posts</li>
+          <li><strong>Subscriptions</strong> — one monthly payment unlocks every endpoint from a single seller</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>Flagship demo: crypto signal API</span><span>07 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Market">
+      <header><div class="kicker">Market direction</div></header>
+      <div class="content">
+        <h2>APIs are revenue products. Agents are becoming buyers.</h2>
+        <ul>
+          <li>Postman 2025: 65% of surveyed organizations generate API revenue; 25% derive more than half their revenue from APIs</li>
+          <li>IBM 2025: enterprise AI workflows projected to grow from 3% to 25% by end of 2025; 70% say agentic AI is essential</li>
+          <li>Pay.sh and Cloudflare Pay-Per-Crawl validate the direction: machine traffic is becoming payable traffic</li>
+          <li>Veloran packages that primitive for independent sellers on Solana</li>
+        </ul>
+      </div>
+      <footer class="footer"><span>Direction, not TAM theater</span><span>08 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Proof">
+      <header><div class="kicker">Demo / proof</div></header>
+      <div class="content">
+        <h2>Live on Solana devnet. End-to-end working today.</h2>
+        <ul>
+          <li>✅ Anchor program deployed — <code>2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS</code></li>
+          <li>✅ Human flow + AI-agent-style HTTP 402 flow both verified on the live URL</li>
+          <li>✅ Subscription tiers, on-chain split, idempotent settlements</li>
+          <li>✅ Open source: <code>github.com/takahibe/veloran</code></li>
+        </ul>
+      </div>
+      <footer class="footer"><span>Watch the 2:30 demo video</span><span>09 / 10</span></footer>
+    </section>
+
+    <section class="slide" data-title="Closing">
+      <header><div class="kicker">Vision / closing</div></header>
+      <div class="content">
+        <h2>Programmable paywalls for the next billion paid requests.</h2>
+        <p class="quote">“Publish once. Humans pay with checkout. Agents pay with HTTP 402. Sellers get paid directly on-chain.”</p>
+        <div class="pillrow"><span class="pill">veloran-paywall-sage.vercel.app</span><span class="pill">github.com/takahibe/veloran</span><span class="pill">dr.adityasaputra@gmail.com</span></div>
+      </div>
+      <footer class="footer"><span>Veloran</span><span>10 / 10</span></footer>
+    </section>
+  </main>
+
+  <nav class="controls" aria-label="Slide controls">
+    <button id="prev" type="button">← Prev</button>
+    <span id="count">1 / 10</span>
+    <button id="next" type="button">Next →</button>
+  </nav>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    let current = Math.min(Math.max(Number(localStorage.getItem('veloranDeckSlide') || 0), 0), slides.length - 1);
+    const count = document.getElementById('count');
+    function show(index) {
+      current = (index + slides.length) % slides.length;
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+      count.textContent = `${current + 1} / ${slides.length}`;
+      localStorage.setItem('veloranDeckSlide', String(current));
+      document.title = `Veloran Deck — ${current + 1}/${slides.length}`;
+    }
+    document.getElementById('prev').addEventListener('click', () => show(current - 1));
+    document.getElementById('next').addEventListener('click', () => show(current + 1));
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowRight', ' ', 'PageDown'].includes(event.key)) { event.preventDefault(); show(current + 1); }
+      if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); show(current - 1); }
+      if (event.key === 'Home') show(0);
+      if (event.key === 'End') show(slides.length - 1);
+    });
+    show(current);
+  </script>
+</body>
+</html>

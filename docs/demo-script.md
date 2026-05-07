@@ -115,7 +115,7 @@ Format below: **`[time]` SCREEN ACTION** (what's visible/changing) — *italiciz
 
 **`[0:50]` W3: Terminal in focus, full-screen or 70% width with W1 (seller dashboard) visible on the right 30%. Command is pre-typed.**
 
-> *"Now watch this. The same paid endpoint speaks the x402 protocol. AI agents can pay it autonomously."*
+> *"Now watch this. The same paid endpoint speaks an HTTP 402 payment flow. AI agents can pay it autonomously."*
 
 **`[0:56]` W3: Hit Enter. The script starts running. Output streams:**
 ```
@@ -205,7 +205,7 @@ Format below: **`[time]` SCREEN ACTION** (what's visible/changing) — *italiciz
    github.com/takahibe/veloran
 ```
 
-> *"Veloran. Programmable paywalls on Solana. Humans pay with a click. AI agents pay autonomously. Ninety-five percent direct to the seller, settled on-chain."*
+> *"Publish once. Humans pay with checkout. Agents pay with HTTP 402. Sellers get paid directly on-chain."*
 
 **`[2:23]` Hold the slide for 5 seconds. Voiceover:**
 

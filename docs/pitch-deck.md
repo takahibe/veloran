@@ -28,9 +28,9 @@
 **Headline:** Premium digital resources are still sold like it's 2015.
 
 **Bullets:**
-- Stripe and API keys assume a long-lived enterprise contract; they don't fit one-off purchases
+- Many existing rails are built for accounts, subscriptions, or contracts — not one-off machine purchases
 - Subscriptions force buyers into recurring relationships they don't want
-- AI agents read content and call APIs all day — and pay nothing
+- AI agents increasingly read content and call APIs — but most resources still have no agent-native payment path
 - Existing crypto-native attempts are off-chain facilitators that custody buyer funds
 
 **Speaker note:** Three audiences (sellers, casual buyers, agents) — one broken billing layer.
@@ -42,25 +42,25 @@
 **Headline:** Three trends just converged.
 
 **Bullets:**
-- Agents are real economic actors — OpenAI, Anthropic, Google all shipped agents in 2025
-- x402 (HTTP 402 Payment Required) shipped as a real protocol in 2025; the wire is ready, the on-chain settlement layer wasn't
+- Major AI labs shipped increasingly agentic products in 2025
+- HTTP 402/x402 emerged as a real payment pattern in 2025; Solana makes settlement cheap enough for small requests
 - USDC supply on Solana > $5B with sub-cent fees — micropayments are finally economical at scale
 
 **Speaker note:** The payment infrastructure question is suddenly live, and Solana is where it's most economical to answer.
 
 ---
 
-## Slide 4 — Solution
+## Slide 4 — Solution + market validation
 
-**Headline:** One paid endpoint, two payers, on-chain settlement.
+**Headline:** Pay.sh proved the demand. Veloran fills the seller-side gap.
 
 **Bullets:**
-- Sellers publish a paid endpoint (API, dataset, content) and set a USDC price
-- Humans see a one-tap checkout via Privy (email or Phantom)
-- AI agents see HTTP 402 with on-chain payment instructions, sign, parse the response
-- A custom Anchor program enforces the 95/5 split atomically — Veloran never holds buyer funds
+- Pay.sh (Solana Foundation + Google Cloud) lets agents discover and pay for established APIs — validation that agent-paid commerce works on Solana
+- Cloudflare Pay-Per-Crawl proves content owners want to charge machine traffic
+- One resource URL supports two buyers: humans checkout with Privy; agents receive HTTP 402 payment instructions
+- Veloran wedge: publishing + paywall + access + on-chain settlement for independent sellers — analysts, researchers, indie API builders, data curators
 
-**Speaker note:** The key reveal: same URL, two checkout flows. The on-chain split is enforced by Solana's runtime, not by us.
+**Speaker note:** Pay.sh is validation, not competition. Their market is established APIs + agent buyers; ours is independent sellers + sovereign settlement. Both can exist; both are needed for the full agent economy stack.
 
 ---
 
@@ -70,7 +70,7 @@
 
 **Bullets:**
 - **Sign in** — email login mints an embedded Privy wallet, or connect Phantom directly
-- **Publish** — drop a JSON response, a file payload, or analyst writing into the gated content field; pick a price
+- **Publish** — drop a JSON response, text payload, or analyst writing into the gated content field; pick a price
 - **Get paid** — humans tap to buy; agents send `X-PAYMENT` header with a signed Solana tx; settlement is on-chain in <3 seconds
 
 **Speaker note:** Show the dashboard during this slide. The form is the product.
@@ -83,11 +83,11 @@
 
 **Bullets:**
 - Sub-cent fees → $0.05 per-call pricing is economical
-- Sub-second confirmations → agent gets its response in the same request cycle
-- Custom programs → atomic 95/5 split impossible where every payment routes through a hosted facilitator
+- Fast, low-cost settlement → agent gets its response in the same request cycle
+- Custom programs → atomic 95/5 split without routing every payment through a hosted facilitator
 - USDC > $5B on Solana → deep stablecoin liquidity for both sides
 
-**Speaker note:** Frame Solana as the *only* chain where this product can exist with this UX. Other chains require facilitators because they can't settle this fast or cheap.
+**Speaker note:** Frame Solana as the chain where this UX is most natural: cheap USDC settlement, fast confirmation, and programmable payment logic.
 
 ---
 
@@ -97,7 +97,7 @@
 
 **Bullets:**
 - **Paid API endpoints** — trade signals, on-chain analytics, model inference (`$0.05–$5` per call)
-- **One-shot datasets** — CSV/JSON/PDF priced once, downloaded once
+- **Text-shaped datasets** — JSON/CSV-style payloads priced once, downloaded once; native files are roadmap
 - **Premium analyst content** — long-form research, gated newsletters, structured reports
 - **Subscriptions** — one monthly payment unlocks every endpoint from a single seller (heavy-buyer flow)
 
@@ -107,15 +107,15 @@
 
 ## Slide 8 — Market direction / opportunity
 
-**Headline:** The settlement layer for paid endpoints.
+**Headline:** APIs are revenue products. Agents are becoming buyers.
 
 **Bullets:**
-- Stripe + API keys = ~$XB API monetization market — none of it crypto-native
-- AI agent traffic crossed 30% of bot traffic on some sites in 2025 — none of it billed
-- Existing crypto x402 facilitators (xpay.sh on Base, payai.network multi-chain) are pay-per-call only and off-chain
-- Veloran's wedge: on-chain settlement + subscriptions + Solana-native — the structural delta competitors can't copy
+- Postman 2025: 65% of surveyed organizations generate API revenue; 25% derive more than half their revenue from APIs
+- IBM 2025: enterprise AI workflows are projected to grow from 3% to 25% by end of 2025; 70% say agentic AI is essential
+- Pay.sh and Cloudflare Pay-Per-Crawl validate the direction: machine traffic is becoming payable traffic
+- Veloran’s wedge: Solana-native publishing + paywall + access + direct on-chain settlement for independent sellers
 
-**Speaker note:** *Real numbers needed before recording. Replace `$XB` with a sourced figure or drop that bullet.*
+**Speaker note:** Use this as direction, not TAM theater. The market already charges for APIs and is starting to charge machine traffic; Veloran packages that primitive for sellers on Solana.
 
 ---
 
@@ -125,7 +125,7 @@
 
 **Bullets:**
 - ✅ Anchor program deployed — `2CtnLfdePpjitQQLtHrQAsa74RXLiubKfSdJmjy2pGcS`
-- ✅ Human flow + AI agent flow both verified on the live URL
+- ✅ Human flow + AI-agent-style HTTP 402 flow both verified on the live URL
 - ✅ Subscription tiers, on-chain split, idempotent settlements
 - ✅ Open source: `github.com/takahibe/veloran`
 
@@ -144,7 +144,7 @@
 - **Q3 2026:** Mainnet program audit + deploy, Helius indexer, custom domains for sellers
 - **Q4 2026:** Native dataset paywalls, multi-asset (SOL, EURC), Veloran SDK so any app paywalls in <30 LOC
 
-**Closing line:** *The agent economy doesn't need another facilitator. It needs a settlement layer.*
+**Closing line:** *Publish once. Humans pay with checkout. Agents pay with HTTP 402. Sellers get paid directly on-chain.*
 
 **Footer:**
 - 🌐 `veloran-paywall-sage.vercel.app`
@@ -169,12 +169,12 @@ The on-chain 95/5 split via a deployed Anchor program — verifiable on Solscan,
 ## Weakest part — needs real implementation proof
 
 - **Datasets as a use case** — we list CSV/JSON/PDF as a wedge, but Veloran today only handles text-shaped payloads (JSON content works because it's text; native binary file delivery is roadmap).
-- **Market sizing claim** in slide 8 — `$XB API monetization market` placeholder must be replaced with a sourced figure or dropped before recording.
+- **Market sizing claim** in slide 8 — replaced with sourced Postman/IBM direction stats; re-check figures before final recording if desired.
 - **No real third-party seller using it yet** — every seller in the live demo is a test account. The deck implies the product is ready for sellers; that's true technically but not yet socially.
 
 ## Words to avoid (per positioning prompt)
 
-"Substack on Solana", "Creators can sell anything", "AI agents pay too", "Web3", "revolutionary", "disruptive", "leverage", "unlock value".
+"creator newsletter on Solana", "Creators can sell anything", "AI agents pay too", "Web3", "revolutionary", "disruptive", "leverage", "unlock value".
 
 ## Words that earn their place
 

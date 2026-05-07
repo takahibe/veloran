@@ -102,7 +102,7 @@ async function main() {
   try {
     const raw = JSON.parse(fs.readFileSync(keypairPath, "utf8")) as number[];
     agent = Keypair.fromSecretKey(Uint8Array.from(raw));
-  } catch (e) {
+  } catch {
     die(
       `Cannot load keypair from ${keypairPath}. ` +
         `Generate one with: solana-keygen new --outfile ${keypairPath} --no-bip39-passphrase`

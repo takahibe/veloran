@@ -140,8 +140,11 @@ export function DashboardClient() {
   // hitting /api/posts before then 401s.
   useEffect(() => {
     if (!me) return;
-    loadPosts();
-    loadEarnings();
+    // This effect intentionally fetches dashboard data after /api/me has
+    // created the Creator row. The state updates happen inside the fetch
+    // helpers after the network boundary, not as derived render state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void Promise.all([loadPosts(), loadEarnings()]);
   }, [me, loadPosts, loadEarnings]);
 
   if (!ready || !authenticated) {
